@@ -1,4 +1,4 @@
-# :pig_face: piggy
+# 🐷 piggy
 
 Budget planner za miljonarje.
 
