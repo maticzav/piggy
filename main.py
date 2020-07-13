@@ -1,11 +1,11 @@
-import pendulum
+from model import Racun
 
-print(pendulum.now())
-# from model import Racun
+moj_racun = Racun("Matičev račun", davek=0.5)
 
-# moj_racun = Racun("Matičev račun", davek=0.5)
+moj_racun.ustvari_ponavljajoco_transakcijo(opis="Žepnina", kolicina=20)
+moj_racun.ustvari_ponavljajoco_transakcijo(
+    opis="Delo pri Petru", kolicina=2000)
+moj_racun.ustvari_ponavljajoco_transakcijo(
+    opis="Najemnina za sobo", kolicina=-250)
 
-# moj_racun.dodaj_ponavljajoc_prihodek(opis="Žepnina", kolicina=2000)
-# moj_racun.dodaj_ponavljajoc_prihodek(opis="Delo pri Petru", kolicina=200_000)
-
-# moj_racun.razpolozljiv_denar()
+print(moj_racun.razpolozljiv_denar_za_kuverte)
