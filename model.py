@@ -46,24 +46,40 @@ class Racun:
     def odhodki(self) -> List['Odhodek']:
         return [trans for trans in self.transakcije if trans.je_odhodek]
 
+    """Vsota, ki smo jo namenili za investicije."""
+    @property
+    def porabljeno_od_investicij(self) -> int:
+        vsota: int = 0
+        for transakcija in self.transakcije:
+            if transakcija.je_odhodek and transakcija.je_investicija:
+                vsota -= transakcija.znesek
+        return vsota
+
     """Ves denar, ki smo ga našparali z davkom."""
     @property
-    def stanje_investicij(self) -> int:
+    def namenjeno_za_investiranje(self) -> int:
         vsota: int = 0
         for transakcija in self.transakcije:
             if transakcija.je_prihodek:
                 vsota += transakcija.investicija
-            if transakcija.je_odhodek and transakcija.je_investicija:
-                vsota += transakcija.znesek
         return vsota
+
+    """Denar, ki ga še lahko investiramo."""
+    @property
+    def razpolozljivo_za_investicije(self) -> int:
+        return self.namenjeno_za_investiranje - self.porabljeno_od_investicij
 
     """Denar, ki ni šel v investicije in ga nismo dali v kuverte."""
 
     @property
-    def stanje_nerazporejeno(self) -> int:
-        for transakcija in self.transakcije:
-            pass
-        return 0
+    def nerazporejeno(self) -> int:
+        return sum([prihodek.nerazporejeno for prihodek in self.prihodki])
+
+    """Pove koliko denarja je razporejenega v kuvertah."""
+
+    @property
+    def namenjeno_za_kuverte(self) -> int:
+        return sum([kuverta.namenjeno for kuverta in self.kuverte.values()])
 
     # Namere -----------------------------------------------------------------
 
@@ -193,24 +209,38 @@ class Kuverta:
         self.racun: 'Racun' = racun
 
     def __eq__(self, druga: 'Kuverta') -> bool:
-        return self.ime == druga.ime
+        return self.ime == druga.ime and self.racun == druga.racun
 
     def __hash__(self) -> int:
         return hash(self.ime)
 
     # Izračunane vrednosti ---------------------------------------------------
 
-    """Vrne koliko denarja je še v kuverti."""
+    """Pove koliko denarja je bilo namenjenega za kuverto."""
 
     @property
-    def razpolozljivo(self) -> int:
+    def namenjeno(self) -> int:
         vsota: int = 0
         for trans in self.racun.transakcije:
             if trans.je_prihodek:
                 vsota += trans.namenjeno_v_kuverto(self)
-            if trans.je_odhodek and False:
-                pass
         return vsota
+
+    """Vrne koliko denarja smo porabili iz kuverte."""
+
+    @property
+    def porabljeno(self) -> int:
+        vsota: int = 0
+        for trans in self.racun.transakcije:
+            if trans.je_odhodek and trans.je_kuverten and trans.kuverta == self:
+                vsota -= trans.znesek
+        return vsota
+
+    """Vrne koliko denarja je še v kuverti."""
+
+    @property
+    def razpolozljivo(self) -> int:
+        return self.namenjeno - self.porabljeno
 
     """Vrne seznam vseh prihodkov, ki smo jih dali v to kuverto."""
 
