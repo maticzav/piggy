@@ -12,19 +12,24 @@ Nekaj pomembnejših napotkov:
 
 # ----------------------------------------------------------------------------
 
-"""Slovarna predstavitev računa"""
+# """Slovarna predstavitev računa"""
 
 
-class IRacun(TypedDict):
-    ime: str
-    davek: str
-    transakcije: List['ITransakcija']
-    kuverte: Dict[str, 'IKuverta']
-    arhiviran: bool
+# class IRacun(TypedDict):
+#     ime: str
+#     davek: str
+#     """Najprej je treba naložit kuverte in mesečne odhodke, šele potem transakcije."""
+#     kuverte: Dict[str, 'IKuverta']
+#     mesecni_odhodki: Dict[str, 'IMesecniOdhodek']
+#     arhiviran: bool
 
 
-class ITransakcija(TypedDict):
-    pass
+# class ITransakcija(TypedDict):
+#     pass
+
+
+# class IMesecniOdhodek(TypedDict):
+#     pass
 
 
 class Racun:
@@ -112,17 +117,47 @@ class Racun:
 
     @property
     def stanje(self):
-        pass
+        return {
+            'ime': self.ime,
+            'davek': self.davek,
+            # Kuverte so lahko ali navadne kuverte ali mesečni odhodki.
+            'kuverte': [{
+                'kind': type(kuverta).__name__,
+                'hash': hash(kuverta),
+                'ime': kuverta.ime,
+                'barva': kuverta.barva,
+                'ikona': kuverta.ikona,
+                'znesek': kuverta.znesek if isinstance(kuverta, MesecniOdhodek) else None
+            } for kuverta in self.kuverte.values()],
+            'transakcije': [{
+                'kind': type(transakcija).__name__,
+                'opis': transakcija.opis,
+                'znesek': transakcija.znesek,
+                'datum': transakcija.datum.to_iso8601_string(),
+                # Predstavitev odhodka.
+                'kuverta': hash(transakcija.kuverta) if isinstance(transakcija, Odhodek) else None,
+                'je_investicija': transakcija.je_investicija if isinstance(transakcija, Odhodek) else None,
+                # Predstavitev prihodka.
+                'razpored_po_kuvertah': [{
+                    'hash': hash(kuverta),
+                    'znesek': znesek
+                } for (kuverta, znesek) in transakcija.razpored_po_kuvertah.items()] if isinstance(transakcija, Prihodek) else None,
+                # Predstavitev ponavljajočega prihodka.
+                'konec': transakcija.konec.to_iso8601_string() if isinstance(transakcija, MesecniPrihodek) else None
+            } for transakcija in self.transakcije],
+            'arhiviran': self.arhiviran
+        }
 
     # Namere -----------------------------------------------------------------
 
     """Začne nov ponavljajoči prihodek."""
 
-    def ustvari_mesecni_prihodek(self, opis: str, znesek: int, razpored_po_kuvertah: Dict['Kuverta', int] = {}) -> 'MesecniPrihodek':
+    def ustvari_mesecni_prihodek(self, opis: str, znesek: int, datum: pendulum.DateTime = pendulum.now(), razpored_po_kuvertah: Dict['Kuverta', int] = {}) -> 'MesecniPrihodek':
         trans = MesecniPrihodek(
             opis=opis,
             znesek=znesek,
             racun=self,
+            datum=datum,
             razpored_po_kuvertah=razpored_po_kuvertah
         )
         self.transakcije.append(trans)
@@ -130,11 +165,12 @@ class Racun:
 
     """Ustvari enkratni prihodek."""
 
-    def ustvari_prihodek(self, opis: str, znesek: int, razpored_po_kuvertah: Dict['Kuverta', int] = {}) -> 'Prihodek':
+    def ustvari_prihodek(self, opis: str, znesek: int, datum: pendulum.DateTime = pendulum.now(), razpored_po_kuvertah: Dict['Kuverta', int] = {}) -> 'Prihodek':
         trans = Prihodek(
             opis=opis,
             znesek=znesek,
             racun=self,
+            datum=datum,
             razpored_po_kuvertah=razpored_po_kuvertah
         )
         self.transakcije.append(trans)
@@ -153,10 +189,11 @@ class Racun:
 
     """Ustvari enkraten odhodek na računu."""
 
-    def ustvari_odhodek(self, opis: str, znesek: int) -> 'Odhodek':
+    def ustvari_odhodek(self, opis: str, znesek: int, datum: pendulum.DateTime = pendulum.now()) -> 'Odhodek':
         trans = Odhodek(
             opis=opis,
             znesek=znesek,
+            datum=datum,
             racun=self
         )
         self.transakcije.append(trans)
@@ -164,23 +201,25 @@ class Racun:
 
     """Ustvari novo investicijo."""
 
-    def ustvari_investicijo(self, opis: str, znesek: int) -> 'Odhodek':
+    def ustvari_investicijo(self, opis: str, znesek: int, datum: pendulum.DateTime = pendulum.now()) -> 'Odhodek':
         trans = Odhodek(
             opis=opis,
             znesek=znesek,
             racun=self,
-            je_investicija=True
+            je_investicija=True,
+            datum=datum
         )
         self.transakcije.append(trans)
         return trans
 
     """Ustvari nov odhodek v določeni kuverti."""
 
-    def ustvari_odhodek_iz_kuverte(self, opis: str, znesek: int, kuverta: 'Kuverta') -> 'Odhodek':
+    def ustvari_odhodek_iz_kuverte(self, opis: str, znesek: int, kuverta: 'Kuverta', datum: pendulum.DateTime = pendulum.now()) -> 'Odhodek':
         trans = Odhodek(
             opis=opis,
             znesek=znesek,
             racun=self,
+            datum=datum,
             kuverta=kuverta
         )
         self.transakcije.append(trans)
@@ -220,13 +259,72 @@ class Racun:
 
     """Ustvari nov objekt Racun in vse potrebne podobjekte iz JSON."""
 
-    @classmethod
+    @ classmethod
     def uvozi_iz_json(cls, json):
-        return cls
+        racun = cls(ime=json["ime"], davek=json["davek"])
+
+        # Naloži kuverte
+        kuverte_po_hashih = {}
+        for j_kuverta in json["kuverte"]:
+            if j_kuverta["kind"] == "Kuverta":
+                kuverta = racun.ustvari_kuverto(
+                    ime=j_kuverta["ime"],
+                    barva=j_kuverta["barva"],
+                    ikona=j_kuverta["ikona"],
+                )
+            elif j_kuverta["kind"] == "MesecniOdhodek":
+                kuverta = racun.ustvari_mesecni_odhodek(
+                    opis=j_kuverta["ime"],
+                    znesek=j_kuverta["znesek"]
+                )
+            kuverte_po_hashih[j_kuverta["hash"]] = kuverta
+
+        print(kuverte_po_hashih)
+
+        # Naloži transakcije
+        for j_trans in json["transakcije"]:
+            print(j_trans)
+            # Odhodek
+            if j_trans["kind"] == "Odhodek":
+                print(j_trans)
+                kuverta = kuverte_po_hashih[j_trans["kuverta"]] if j_trans.get(
+                    "kuverta") else None
+
+                trans = racun.ustvari_odhodek(
+                    opis=j_trans["opis"],
+                    znesek=j_trans["znesek"],
+                    datum=pendulum.parse(j_trans["datum"]),
+                    kuverta=kuverta,
+                    je_investicija=j_trans.get("je_investicija", False)
+                )
+            # Prihodek
+            else:
+                # Sestavi razpored po kuvertah
+                razpored: Dict['Kuverta', int] = {}
+                for rel in j_trans["razpored_po_kuvertah"]:
+                    razpored[kuverte_po_hashih[rel["hash"]]]: rel["znesek"]
+
+                # Ustvari transakcije.
+                if j_trans["kind"] == "Prihodek":
+                    trans = racun.ustvari_prihodek(
+                        opis=j_trans["opis"],
+                        znesek=j_trans["znesek"],
+                        datum=pendulum.parse(j_trans["datum"]),
+                        razpored_po_kuvertah=razpored,
+
+                    )
+                if j_trans["kind"] == "MesecniPrihodek":
+                    trans = racun.ustvari_mesecni_prihodek(
+                        opis=j_trans["opis"],
+                        znesek=j_trans["znesek"],
+                        datum=pendulum.parse(j_trans["datum"]),
+                        razpored_po_kuvertah=razpored
+                    )
+        return racun
 
     """Uvozi Racun iz JSON datoteke."""
 
-    @classmethod
+    @ classmethod
     def uvozi_iz_datoteke(cls, ime_datoteke):
         with open(ime_datoteke) as datoteka:
             stanje = json.load(datoteka)
@@ -280,7 +378,7 @@ class Kuverta:
 
     """Pove koliko denarja je bilo namenjenega za kuverto."""
 
-    @property
+    @ property
     def namenjeno(self) -> int:
         vsota: int = 0
         for trans in self.racun.transakcije:
@@ -290,7 +388,7 @@ class Kuverta:
 
     """Vrne koliko denarja smo porabili iz kuverte."""
 
-    @property
+    @ property
     def porabljeno(self) -> int:
         vsota: int = 0
         for trans in self.racun.transakcije:
@@ -300,13 +398,13 @@ class Kuverta:
 
     """Vrne koliko denarja je še v kuverti."""
 
-    @property
+    @ property
     def razpolozljivo(self) -> int:
         return self.namenjeno - self.porabljeno
 
     """Vrne seznam vseh prihodkov, ki smo jih dali v to kuverto."""
 
-    @property
+    @ property
     def prihodki(self) -> List['Prihodek']:
         return [prihodek for prihodek in self.racun.prihodki if prihodek.namenjeno_v_kuverto(self) > 0]
 
@@ -331,13 +429,13 @@ class MesecniOdhodek(Kuverta):
     # Izračunane vrednosti ---------------------------------------------------
 
     """Mesečni odhodek je zmeraj plačan v celoti."""
-    @property
+    @ property
     def razpolozljivo(self) -> int:
         return 0
 
     """Pove ali smo namenili dovolj denarja za odhodek."""
 
-    @property
+    @ property
     def placano(self) -> bool:
         return super().razpolozljivo >= self.znesek
 
@@ -350,21 +448,21 @@ class Transakcija:
     Predstavlja prihodek ali odhodek.
     """
 
-    def __init__(self, opis: str, znesek: int, racun: Racun):
+    def __init__(self, opis: str, znesek: int, racun: Racun, datum: pendulum.DateTime):
         self.opis: str = opis
         self.znesek: int = znesek
-        self.datum: pendulum.DateTime = pendulum.now()
+        self.datum: pendulum.DateTime = datum
         self.racun: Racun = racun
 
     # Izračunane vrednosti ---------------------------------------------------
 
     """Pove ali je transakcija prihodek."""
-    @property
+    @ property
     def je_prihodek(self):
         return self.znesek >= 0
 
     """Pove ali je transakcija odhodek."""
-    @property
+    @ property
     def je_odhodek(self):
         return self.znesek < 0
 
@@ -383,7 +481,7 @@ class Odhodek(Transakcija):
     predvidevamo da je splošen odhodek.
     """
 
-    def __init__(self, opis: str, znesek: int, racun: Racun, kuverta=None, je_investicija=False):
+    def __init__(self, opis: str, znesek: int, racun: Racun, datum: pendulum.DateTime, kuverta=None, je_investicija=False):
         # Preverimo vrednosti
         assert kuverta is None or not je_investicija, "Odhodek gre ali iz kuverte ali investicij."
         assert znesek >= 0, "Količino je treba podati kot nenegativno vrednost."
@@ -391,7 +489,8 @@ class Odhodek(Transakcija):
         super().__init__(
             opis=opis,
             znesek=-znesek,
-            racun=racun
+            racun=racun,
+            datum=datum
         )
         self.kuverta: 'Kuverta' = kuverta
         self.je_investicija: bool = je_investicija
@@ -399,12 +498,12 @@ class Odhodek(Transakcija):
     # Izračunane vrednosti ---------------------------------------------------
 
     """Pove ali je odhodek iz kuverte."""
-    @property
+    @ property
     def je_kuverten(self) -> bool:
         return self.kuverta is not None
 
     """Pove ali je odhodek splošen."""
-    @property
+    @ property
     def je_nerazporejen(self) -> bool:
         return not self.je_kuverten and not self.je_investicija
 
@@ -414,23 +513,28 @@ class Prihodek(Transakcija):
     Predstavlja enkratni prihodek, ki ga razdelimo med kuverte.
     """
 
-    def __init__(self, opis: str, znesek: int, racun: 'Racun', razpored_po_kuvertah: Dict['Kuverta', int] = {None: None}):
+    def __init__(self, opis: str, znesek: int, racun: 'Racun', datum: pendulum.DateTime, razpored_po_kuvertah: Dict['Kuverta', int] = {None: None}):
         # Preverimo podatke
         assert znesek >= 0, "Prihodek mora bit pozitiven."
 
-        super().__init__(opis=opis, znesek=znesek, racun=racun)
+        super().__init__(
+            opis=opis,
+            znesek=znesek,
+            racun=racun,
+            datum=datum
+        )
         self.razpored_po_kuvertah = razpored_po_kuvertah
 
     # Izračunane vrednosti ---------------------------------------------------
 
     """Vrne koliko denarja od prihodka smo dali v investicije."""
 
-    @property
+    @ property
     def investicija(self) -> int:
         return int(self.znesek * self.racun.davek)
 
     """Pove koliko denarja nismo razporedili."""
-    @property
+    @ property
     def nerazporejeno(self) -> int:
         return self.znesek - sum(self.razpored_po_kuvertah.values()) - self.investicija
 
@@ -445,42 +549,43 @@ class MesecniPrihodek(Prihodek):
     Predstavlja prihodek, ki se ponavlja mesečno.
     """
 
-    def __init__(self, opis: str, znesek: int, racun: Racun, razpored_po_kuvertah={None: None}):
+    def __init__(self, opis: str, znesek: int, racun: Racun, datum: pendulum.DateTime, razpored_po_kuvertah={None: None}):
         super().__init__(
             opis=opis,
             znesek=znesek,
             racun=racun,
-            razpored_po_kuvertah=razpored_po_kuvertah
+            razpored_po_kuvertah=razpored_po_kuvertah,
+            datum=datum
         )
         self.__konec = None
 
     # Izračunane vrednosti ---------------------------------------------------
 
     """Preimenujemo datum iz Transakcije v zacetek."""
-    @property
+    @ property
     def zacetek(self):
         return self.datum
 
     """Vrne datum zaprtja oziroma zdajšnji datum, če se prihodek še ni zaključil."""
 
-    @property
+    @ property
     def konec(self):
         return self.__konec or pendulum.now()
 
     """Vrne koliko časa je ta prihodek že aktiven."""
-    @property
+    @ property
     def odprt_mescev(self):
         casovna_razlika = self.konec - self.zacetek
         return casovna_razlika.months + 1
 
     """Vrne skupno investicijo čez več mescev."""
 
-    @property
+    @ property
     def investicija(self):
         return super().investicija * self.odprt_mescev
 
     """Pove koliko denarja nismo razporedili."""
-    @property
+    @ property
     def nerazporejeno(self):
         return super().nerazporejeno * self.odprt_mescev
 

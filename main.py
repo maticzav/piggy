@@ -44,6 +44,16 @@ Za ostalo ti ostane: {moj_racun.nerazporejeno_razpolozljivo}
 """)
 
 
-print("Za najemnino dobimo iz:")
-for prihodek in najemnina_stanovanje.prihodki:
-    print(prihodek.opis)
+# Izvozi
+
+moj_racun.izvozi_v_datoteko("test.json")
+
+
+# Uvozi
+uvozen_racun = Racun.uvozi_iz_datoteke("test.json")
+
+print(f"""
+Za investicije si namenil: {uvozen_racun.namenjeno_za_investiranje}
+V kuverte je šlo: {uvozen_racun.namenjeno_za_kuverte}
+Za ostalo ti ostane: {uvozen_racun.nerazporejeno_razpolozljivo}
+""")
