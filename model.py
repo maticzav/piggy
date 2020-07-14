@@ -7,6 +7,8 @@ POMEMBNO:
 
 Nekaj pomembnejših napotkov:
     1. količina je predstavljena s celimi števili v centih (1€ = 100).
+
+TODO: MesecniOdhodek bo bolje predstavljen kot še ena kuverta s posebnimi metodami.
 """
 
 # ----------------------------------------------------------------------------
@@ -20,56 +22,36 @@ class Racun:
 
     def __init__(self, ime: str, davek: float):
         # Preveri vrednosti
-        assert (davek >= 0 and davek <= 1), "Davek mora predstavljat odstotek."
+        assert davek >= 0 and davek <= 1, "Davek mora predstavljat odstotek."
 
         self.ime: str = ime
         self.davek: float = davek
         self.transakcije: List['Transakcija'] = list()
-        self.kuverte: List['Kuverta'] = list()
+        self.kuverte: Dict[str, 'Kuverta'] = dict()
         self.arhiviran: bool = False
 
         self.__transakcije_po: Dict[str, 'Transakcija'] = dict()
 
     # Izračunane vrednosti ---------------------------------------------------
 
-    # """Vsi prihodki do dne."""
-    # @property
-    # def vsi_prihodki(self):
-    #     vsota = 0
-    #     for transakcija in self.ponavljajoce_transakcije:
-    #         if transakcija.je_dohodek:
-    #             vsota += transakcija.skupna_kolicina
-    #     for transakcija in self.transakcije:
-    #         if transakcija.je_dohodek:
-    #             vsota += transakcija.kolicina
-    #     return vsota
-
-    # """Vsi odhodki do dne, kot pozitivna vsota."""
-    # @property
-    # def vsi_odhodki(self):
-    #     vsota = 0
-    #     for transakcija in self.ponavljajoce_transakcije:
-    #         if transakcija.je_odhodek:
-    #             vsota -= transakcija.skupna_kolicina
-    #     for transakcija in self.transakcije:
-    #         if transakcija.je_odhodek:
-    #             vsota -= transakcija.kolicina
-    #     return vsota
-
     """Ves denar, ki smo ga našparali z davkom."""
     @property
-    def nasparano(self):
-        return sum([prihodek.investicija for prihodek in self.transakcije if prihodek.je_prihodek])
+    def stanje_investicij(self) -> int:
+        vsota: int = 0
+        for transakcija in self.transakcije:
+            if isinstance(transakcija, Prihodek):
+                vsota += transakcija.investicija
+            if isinstance(transakcija, Odhodek) and transakcija.je_investicija:
+                vsota += transakcija.kolicina
+        return vsota
 
-    """Denar, ki ni šel v šparovec in ga nismo porabili v kuvertah."""
+    """Denar, ki ni šel v investicije in ga nismo dali v kuverte."""
 
     @property
-    def ostalo(self):
-        pass
-
-    @property
-    def porabljen_denar_v_kuvertah(self):
-        return sum([kuverta.stanje for kuverta in self.kuverte])
+    def stanje_nerazporejeno(self) -> int:
+        for transakcija in self.transakcije:
+            pass
+        return 0
 
     # Namere -----------------------------------------------------------------
 
@@ -87,25 +69,73 @@ class Racun:
 
     """Ustvari enkratni prihodek."""
 
-    def ustvari_prihodek(self, opis: str, kolicina: int, razpored_po_kuvertah: Dict['Kuverta', int] = {}):
+    def ustvari_prihodek(self, opis: str, kolicina: int, razpored_po_kuvertah: Dict['Kuverta', int] = {}) -> 'Prihodek':
         trans = Prihodek(
             opis=opis,
             kolicina=kolicina,
-            razred=self,
+            racun=self,
             razpored_po_kuvertah=razpored_po_kuvertah
         )
         self.transakcije.append(trans)
         return trans
 
-    """Zaključi ponavljajočo transakcijo."""
+    """Začne nov mesečni odhodek."""
 
-    def koncaj_ponavljajoco_transakcijo(self, id):
-        pass
+    def ustvari_mesecni_odhodek(self, opis: str, kolicina: int) -> 'MesecniOdhodek':
+        trans = MesecniOdhodek(
+            opis=opis,
+            kolicina=kolicina,
+            racun=self
+        )
+        self.transakcije.append(trans)
+        return trans
+
+    """Ustvari enkraten odhodek na računu."""
+
+    def ustvari_odhodek(self, opis: str, kolicina: int) -> 'Odhodek':
+        trans = Odhodek(
+            opis=opis,
+            kolicina=kolicina,
+            racun=self
+        )
+        self.transakcije.append(trans)
+        return trans
+
+    """Ustvari novo investicijo."""
+
+    def ustvari_investicijo(self, opis: str, kolicina: int) -> 'Odhodek':
+        trans = Odhodek(
+            opis=opis,
+            kolicina=kolicina,
+            racun=self,
+            je_investicija=True
+        )
+        self.transakcije.append(trans)
+        return trans
+
+    """Ustvari nov odhodek v določeni kuverti."""
+
+    def ustvari_odhodek_iz_kuverte(self, opis: str, kolicina: int, kuverta: 'Kuverta') -> 'Odhodek':
+        trans = Odhodek(
+            opis=opis,
+            kolicina=kolicina,
+            racun=self,
+            kuverta=kuverta
+        )
+        self.transakcije.append(trans)
+        return trans
 
     """Ustvari novo kuverto."""
 
-    def ustvari_kuverto(self, opis: str, barva: str, ikona: str):
-        pass
+    def ustvari_kuverto(self, ime: str, barva: str = "modra", ikona: str = "kuverta") -> 'Kuverta':
+        kuverta = Kuverta(
+            ime=ime,
+            barva=barva,
+            ikona=ikona,
+            racun=self
+        )
+        self.kuverte[hash(kuverta)] = kuverta
+        return kuverta
 
     """Arhivira račun tako, da arhivira use ponavljajoče transakcije in kuverte."""
 
@@ -148,21 +178,35 @@ class Odhodek(Transakcija):
     """
     Odhodek je enkraten znesek, ki ga lahko vzamemo iz investicij,
     posamezne kuverte ali iz ostalega denarja.
+
+    Če kuverta ni definirana in odhodek ni označen za investicijo
+    predvidevamo da je splošen odhodek.
     """
 
-    def __init__(self, opis: str, kolicina: int, racun: Racun, kuverta=None, investicija=False):
+    def __init__(self, opis: str, kolicina: int, racun: Racun, kuverta=None, je_investicija=False):
         # Preverimo vrednosti
-        assert (
-            kuverta != None and investicija), "Odhodek gre ali iz kuverte ali investicij."
+        assert kuverta is None or not je_investicija, "Odhodek gre ali iz kuverte ali investicij."
         assert kolicina >= 0, "Količino je treba podati kot nenegativno vrednost."
 
         super().__init__(
             opis=opis,
-            kolicina=kolicina,
+            kolicina=-kolicina,
             racun=racun
         )
-        self.kuverta = kuverta
-        self.investicija = investicija
+        self.kuverta: 'Kuverta' = kuverta
+        self.je_investicija: bool = je_investicija
+
+    # Izračunane vrednosti ---------------------------------------------------
+
+    """Pove ali je odhodek iz kuverte."""
+    @property
+    def je_kuverten(self) -> bool:
+        return self.kuverta != None
+
+    """Pove ali je odhodek splošen."""
+    @property
+    def je_splosen(self) -> bool:
+        return not self.je_kuverten and not self.je_investicija
 
 
 class MesecniOdhodek(Transakcija):
@@ -192,14 +236,19 @@ class MesecniOdhodek(Transakcija):
     def konec(self):
         return self.__konec or pendulum.now()
 
+    """Vrne koliko časa je ta odhodek že aktiven."""
+    @property
+    def odprt_mescev(self):
+        casovna_razlika = self.konec - self.zacetek
+        return casovna_razlika.months + 1
+
     """
     Izračuna skupno kolicino transakcije do zdaj oziroma do prenehanja transakcije.
     Skupna količina je količina pomnožena s številom mesecev med začetkom in koncem.
     """
     @property
     def vsota(self):
-        casovna_razlika = self.konec - self.zacetek
-        return self.kolicina * (casovna_razlika.months + 1)
+        return self.kolicina * self.odprt_mescev
 
     # Namere -----------------------------------------------------------------
 
@@ -234,6 +283,11 @@ class Prihodek(Transakcija):
     def nerazporejeno(self) -> int:
         return self.kolicina - sum(self.razpored_po_kuvertah.values()) - self.investicija
 
+    """Pove koliko denarja v transakciji je bilo namenjenega v dano kuverto."""
+
+    def namenjeno_v_kuverto(self, kuverta: 'Kuverta') -> int:
+        return self.razpored_po_kuvertah.get(kuverta, 0)
+
 
 class MesecniPrihodek(Prihodek):
     """
@@ -262,18 +316,27 @@ class MesecniPrihodek(Prihodek):
     def konec(self):
         return self.__konec or pendulum.now()
 
+    """Vrne koliko časa je ta prihodek že aktiven."""
+    @property
+    def odprt_mescev(self):
+        casovna_razlika = self.konec - self.zacetek
+        return casovna_razlika.months + 1
+
     """Vrne skupno investicijo čez več mescev."""
 
     @property
     def investicija(self):
-        casovna_razlika = self.konec - self.zacetek
-        return super().investicija * (casovna_razlika.months + 1)
+        return super().investicija * self.odprt_mescev
 
     """Pove koliko denarja nismo razporedili."""
     @property
     def nerazporejeno(self):
-        casovna_razlika = self.konec - self.zacetek
-        return super().nerazporejeno * (casovna_razlika.months + 1)
+        return super().nerazporejeno * self.odprt_mescev
+
+    """Pove koliko denarja smo namenili v kuverto do sedaj."""
+
+    def namenjeno_v_kuverto(self, kuverta: 'Kuverta') -> int:
+        return super().namenjeno_v_kuverto(kuverta) * self.odprt_mescev
 
     # Namere -----------------------------------------------------------------
 
@@ -293,10 +356,49 @@ class Kuverta:
 
     V kuverto dodajamo denar iz mesečnih prihodkov in začasnih prihodkov.
     Edina limita porabe v kuverti je prazna kuverta.
+
+    Barve:
+        - modra
+        - rdeca
+        - zelena
+        - rumena
+        - siva
+    Ikone:
+        - kuverta
+        - avto
+        - morje
+        - banka
     """
 
-    def __init__(self, ime: str, barva: str = "modra", ikona: str = "kuverta"):
-        self.ime = ime
-        self.barva = barva
-        self.ikona = ikona
-        # self.transakcije = []
+    razpolozljive_barve = ["modra", "rdeca", "zelena", "rumena", "siva"]
+    razpolozljive_ikone = ["kuverta", "avto", "morje", "banka"]
+
+    def __init__(self, ime: str, racun: Racun, barva: str, ikona: str):
+        # Preveri vrednosti
+        assert barva in Kuverta.razpolozljive_barve, "Neznana barva."
+        assert ikona in Kuverta.razpolozljive_ikone, "Neznana ikona."
+
+        self.ime: str = ime
+        self.barva: str = barva
+        self.ikona: str = ikona
+        self.racun: 'Racun' = racun
+
+    def __eq__(self, druga: 'Kuverta') -> bool:
+        return self.ime == druga.ime
+
+    def __hash__(self) -> int:
+        return hash(self.ime)
+
+    # Izračunane vrednosti ---------------------------------------------------
+
+    """Vrne koliko denarja je še v kuverti."""
+
+    @property
+    def razpolozljivo(self) -> int:
+        vsota: int = 0
+        for trans in self.racun.transakcije:
+            if trans.je_prihodek:
+                vsota += trans.namenjeno_v_kuverto(self)
+            if trans.je_odhodek and False:
+                pass
+        return vsota
