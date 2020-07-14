@@ -72,8 +72,24 @@ class Racun:
     """Denar, ki ni šel v investicije in ga nismo dali v kuverte."""
 
     @property
-    def nerazporejeno(self) -> int:
+    def nerazporejeno_namenjeno(self) -> int:
         return sum([prihodek.nerazporejeno for prihodek in self.prihodki])
+
+    """Nerazporejen denar, ki smo ga že porabili."""
+
+    @property
+    def nerazporejeno_porabljeno(self) -> int:
+        vsota: int = 0
+        for transakcija in self.transakcije:
+            if transakcija.je_odhodek and transakcija.je_nerazporejen:
+                vsota -= transakcija.znesek
+        return vsota
+
+    """Nerazporejen denar, ki smo ga že porabili."""
+
+    @property
+    def nerazporejeno_razpolozljivo(self) -> int:
+        return self.nerazporejeno_namenjeno - self.nerazporejeno_porabljeno
 
     """Pove koliko denarja je razporejenega v kuvertah."""
 
@@ -339,11 +355,11 @@ class Odhodek(Transakcija):
     """Pove ali je odhodek iz kuverte."""
     @property
     def je_kuverten(self) -> bool:
-        return self.kuverta != None
+        return self.kuverta is not None
 
     """Pove ali je odhodek splošen."""
     @property
-    def je_splosen(self) -> bool:
+    def je_nerazporejen(self) -> bool:
         return not self.je_kuverten and not self.je_investicija
 
 

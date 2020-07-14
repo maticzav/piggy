@@ -29,13 +29,18 @@ moj_racun.ustvari_prihodek(opis="Ukradel avto", znesek=20)
 
 moj_racun.ustvari_investicijo(opis="BitCoin bigbrain", znesek=1000)
 
+# Naredi še nekaj odhodkov
+
+moj_racun.ustvari_odhodek(opis="Kino", znesek=2)
+moj_racun.ustvari_odhodek_iz_kuverte(
+    opis="Kebab", znesek=10, kuverta=kuverta_hrana)
+
 # Preveri koliko denarja ostane
 
 print(f"""
 Za investicije si namenil: {moj_racun.namenjeno_za_investiranje}
 V kuverte je šlo: {moj_racun.namenjeno_za_kuverte}
-Za ostalo ti ostane: {moj_racun.nerazporejeno}
-Skupaj: {moj_racun.namenjeno_za_investiranje + moj_racun.namenjeno_za_kuverte + moj_racun.nerazporejeno}
+Za ostalo ti ostane: {moj_racun.nerazporejeno_razpolozljivo}
 """)
 
 
