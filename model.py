@@ -34,15 +34,27 @@ class Racun:
 
     # Izračunane vrednosti ---------------------------------------------------
 
+    """Vrne vse prihodki med transakcijami."""
+
+    @property
+    def prihodki(self) -> List['Prihodek']:
+        return [trans for trans in self.transakcije if trans.je_prihodek]
+
+    """Vrne vse odhodke med transakcijami."""
+
+    @property
+    def odhodki(self) -> List['Odhodek']:
+        return [trans for trans in self.transakcije if trans.je_odhodek]
+
     """Ves denar, ki smo ga našparali z davkom."""
     @property
     def stanje_investicij(self) -> int:
         vsota: int = 0
         for transakcija in self.transakcije:
-            if isinstance(transakcija, Prihodek):
+            if transakcija.je_prihodek:
                 vsota += transakcija.investicija
-            if isinstance(transakcija, Odhodek) and transakcija.je_investicija:
-                vsota += transakcija.kolicina
+            if transakcija.je_odhodek and transakcija.je_investicija:
+                vsota += transakcija.znesek
         return vsota
 
     """Denar, ki ni šel v investicije in ga nismo dali v kuverte."""
@@ -57,10 +69,10 @@ class Racun:
 
     """Začne nov ponavljajoči prihodek."""
 
-    def ustvari_mesecni_prihodek(self, opis: str, kolicina: int, razpored_po_kuvertah: Dict['Kuverta', int] = {}) -> 'MesecniPrihodek':
+    def ustvari_mesecni_prihodek(self, opis: str, znesek: int, razpored_po_kuvertah: Dict['Kuverta', int] = {}) -> 'MesecniPrihodek':
         trans = MesecniPrihodek(
             opis=opis,
-            kolicina=kolicina,
+            znesek=znesek,
             racun=self,
             razpored_po_kuvertah=razpored_po_kuvertah
         )
@@ -69,10 +81,10 @@ class Racun:
 
     """Ustvari enkratni prihodek."""
 
-    def ustvari_prihodek(self, opis: str, kolicina: int, razpored_po_kuvertah: Dict['Kuverta', int] = {}) -> 'Prihodek':
+    def ustvari_prihodek(self, opis: str, znesek: int, razpored_po_kuvertah: Dict['Kuverta', int] = {}) -> 'Prihodek':
         trans = Prihodek(
             opis=opis,
-            kolicina=kolicina,
+            znesek=znesek,
             racun=self,
             razpored_po_kuvertah=razpored_po_kuvertah
         )
@@ -81,21 +93,21 @@ class Racun:
 
     """Začne nov mesečni odhodek."""
 
-    def ustvari_mesecni_odhodek(self, opis: str, kolicina: int) -> 'MesecniOdhodek':
-        trans = MesecniOdhodek(
+    def ustvari_mesecni_odhodek(self, opis: str, znesek: int) -> 'MesecniOdhodek':
+        kuverta = MesecniOdhodek(
             opis=opis,
-            kolicina=kolicina,
+            znesek=znesek,
             racun=self
         )
-        self.transakcije.append(trans)
-        return trans
+        self.kuverte[hash(kuverta)] = kuverta
+        return kuverta
 
     """Ustvari enkraten odhodek na računu."""
 
-    def ustvari_odhodek(self, opis: str, kolicina: int) -> 'Odhodek':
+    def ustvari_odhodek(self, opis: str, znesek: int) -> 'Odhodek':
         trans = Odhodek(
             opis=opis,
-            kolicina=kolicina,
+            znesek=znesek,
             racun=self
         )
         self.transakcije.append(trans)
@@ -103,10 +115,10 @@ class Racun:
 
     """Ustvari novo investicijo."""
 
-    def ustvari_investicijo(self, opis: str, kolicina: int) -> 'Odhodek':
+    def ustvari_investicijo(self, opis: str, znesek: int) -> 'Odhodek':
         trans = Odhodek(
             opis=opis,
-            kolicina=kolicina,
+            znesek=znesek,
             racun=self,
             je_investicija=True
         )
@@ -115,10 +127,10 @@ class Racun:
 
     """Ustvari nov odhodek v določeni kuverti."""
 
-    def ustvari_odhodek_iz_kuverte(self, opis: str, kolicina: int, kuverta: 'Kuverta') -> 'Odhodek':
+    def ustvari_odhodek_iz_kuverte(self, opis: str, znesek: int, kuverta: 'Kuverta') -> 'Odhodek':
         trans = Odhodek(
             opis=opis,
-            kolicina=kolicina,
+            znesek=znesek,
             racun=self,
             kuverta=kuverta
         )
@@ -141,209 +153,6 @@ class Racun:
 
     def arhiviraj(self):
         pass
-
-# ----------------------------------------------------------------------------
-
-
-class Transakcija:
-    """
-    Predstavlja prihodek ali odhodek.
-    """
-
-    def __init__(self, opis: str, kolicina: int, racun: Racun):
-        self.opis: str = opis
-        self.kolicina: int = kolicina
-        self.datum: pendulum.DateTime = pendulum.now()
-        self.racun: Racun = racun
-
-    # Izračunane vrednosti ---------------------------------------------------
-
-    """Pove ali je transakcija prihodek."""
-    @property
-    def je_prihodek(self):
-        return self.kolicina >= 0
-
-    """Pove ali je transakcija odhodek."""
-    @property
-    def je_odhodek(self):
-        return self.kolicina < 0
-
-    # """Vrne vrednost transakcije."""
-    # @property
-    # def vrednost(self):
-    #     return self.kolicina
-
-
-class Odhodek(Transakcija):
-    """
-    Odhodek je enkraten znesek, ki ga lahko vzamemo iz investicij,
-    posamezne kuverte ali iz ostalega denarja.
-
-    Če kuverta ni definirana in odhodek ni označen za investicijo
-    predvidevamo da je splošen odhodek.
-    """
-
-    def __init__(self, opis: str, kolicina: int, racun: Racun, kuverta=None, je_investicija=False):
-        # Preverimo vrednosti
-        assert kuverta is None or not je_investicija, "Odhodek gre ali iz kuverte ali investicij."
-        assert kolicina >= 0, "Količino je treba podati kot nenegativno vrednost."
-
-        super().__init__(
-            opis=opis,
-            kolicina=-kolicina,
-            racun=racun
-        )
-        self.kuverta: 'Kuverta' = kuverta
-        self.je_investicija: bool = je_investicija
-
-    # Izračunane vrednosti ---------------------------------------------------
-
-    """Pove ali je odhodek iz kuverte."""
-    @property
-    def je_kuverten(self) -> bool:
-        return self.kuverta != None
-
-    """Pove ali je odhodek splošen."""
-    @property
-    def je_splosen(self) -> bool:
-        return not self.je_kuverten and not self.je_investicija
-
-
-class MesecniOdhodek(Transakcija):
-    """
-    Ustvari transakcijo, ki se ponavlja vsak mesec.
-    """
-
-    def __init__(self, opis: str, kolicina: int, racun: Racun):
-        # Preveri vrednosti
-        assert kolicina >= 0, "Količino je treba podati kot nenegativno vrednost."
-
-        super().__init__(
-            opis=opis,
-            kolicina=-kolicina,
-            racun=racun
-        )
-        self.__konec = None
-
-    # Izračunane vrednosti ---------------------------------------------------
-
-    """Preimenujemo datum iz Transakcije v zacetek."""
-    @property
-    def zacetek(self):
-        return self.datum
-
-    @property
-    def konec(self):
-        return self.__konec or pendulum.now()
-
-    """Vrne koliko časa je ta odhodek že aktiven."""
-    @property
-    def odprt_mescev(self):
-        casovna_razlika = self.konec - self.zacetek
-        return casovna_razlika.months + 1
-
-    """
-    Izračuna skupno kolicino transakcije do zdaj oziroma do prenehanja transakcije.
-    Skupna količina je količina pomnožena s številom mesecev med začetkom in koncem.
-    """
-    @property
-    def vsota(self):
-        return self.kolicina * self.odprt_mescev
-
-    # Namere -----------------------------------------------------------------
-
-    """Zaključi ponavljajočo transakcijo."""
-
-    def zakljuci(self):
-        self.__konec = pendulum.now()
-
-
-class Prihodek(Transakcija):
-    """
-    Predstavlja enkratni prihodek, ki ga razdelimo med kuverte.
-    """
-
-    def __init__(self, opis: str, kolicina: int, racun: 'Racun', razpored_po_kuvertah: Dict['Kuverta', int] = {None: None}):
-        # Preverimo podatke
-        assert kolicina >= 0, "Prihodek mora bit pozitiven."
-
-        super().__init__(opis=opis, kolicina=kolicina, racun=racun)
-        self.razpored_po_kuvertah = razpored_po_kuvertah
-
-    # Izračunane vrednosti ---------------------------------------------------
-
-    """Vrne koliko denarja od prihodka smo dali v investicije."""
-
-    @property
-    def investicija(self) -> int:
-        return int(self.kolicina * self.racun.davek)
-
-    """Pove koliko denarja nismo razporedili."""
-    @property
-    def nerazporejeno(self) -> int:
-        return self.kolicina - sum(self.razpored_po_kuvertah.values()) - self.investicija
-
-    """Pove koliko denarja v transakciji je bilo namenjenega v dano kuverto."""
-
-    def namenjeno_v_kuverto(self, kuverta: 'Kuverta') -> int:
-        return self.razpored_po_kuvertah.get(kuverta, 0)
-
-
-class MesecniPrihodek(Prihodek):
-    """
-    Predstavlja prihodek, ki se ponavlja mesečno.
-    """
-
-    def __init__(self, opis: str, kolicina: int, racun: Racun, razpored_po_kuvertah={None: None}):
-        super().__init__(
-            opis=opis,
-            kolicina=kolicina,
-            racun=racun,
-            razpored_po_kuvertah=razpored_po_kuvertah
-        )
-        self.__konec = None
-
-    # Izračunane vrednosti ---------------------------------------------------
-
-    """Preimenujemo datum iz Transakcije v zacetek."""
-    @property
-    def zacetek(self):
-        return self.datum
-
-    """Vrne datum zaprtja oziroma zdajšnji datum, če se prihodek še ni zaključil."""
-
-    @property
-    def konec(self):
-        return self.__konec or pendulum.now()
-
-    """Vrne koliko časa je ta prihodek že aktiven."""
-    @property
-    def odprt_mescev(self):
-        casovna_razlika = self.konec - self.zacetek
-        return casovna_razlika.months + 1
-
-    """Vrne skupno investicijo čez več mescev."""
-
-    @property
-    def investicija(self):
-        return super().investicija * self.odprt_mescev
-
-    """Pove koliko denarja nismo razporedili."""
-    @property
-    def nerazporejeno(self):
-        return super().nerazporejeno * self.odprt_mescev
-
-    """Pove koliko denarja smo namenili v kuverto do sedaj."""
-
-    def namenjeno_v_kuverto(self, kuverta: 'Kuverta') -> int:
-        return super().namenjeno_v_kuverto(kuverta) * self.odprt_mescev
-
-    # Namere -----------------------------------------------------------------
-
-    """Zaključi mesečni prihodek."""
-
-    def zakljuci(self):
-        self.__konec = pendulum.now()
 
 
 # ----------------------------------------------------------------------------
@@ -402,3 +211,195 @@ class Kuverta:
             if trans.je_odhodek and False:
                 pass
         return vsota
+
+    """Vrne seznam vseh prihodkov, ki smo jih dali v to kuverto."""
+
+    @property
+    def prihodki(self) -> List['Prihodek']:
+        return [prihodek for prihodek in self.racun.prihodki if prihodek.namenjeno_v_kuverto(self) > 0]
+
+
+class MesecniOdhodek(Kuverta):
+    """
+    Ustvari novo kuverto za stalen mesecni odhodek.
+    """
+
+    def __init__(self, opis: str, znesek: int, racun: Racun):
+        # Preveri vrednosti
+        assert znesek >= 0, "Količino je treba podati kot nenegativno vrednost."
+
+        super().__init__(
+            ime=opis,
+            barva="siva",
+            ikona="banka",
+            racun=racun,
+        )
+        self.znesek = znesek
+
+    # Izračunane vrednosti ---------------------------------------------------
+
+    """Mesečni odhodek je zmeraj plačan v celoti."""
+    @property
+    def razpolozljivo(self) -> int:
+        return 0
+
+    """Pove ali smo namenili dovolj denarja za odhodek."""
+
+    @property
+    def placano(self) -> bool:
+        return super().razpolozljivo >= self.znesek
+
+
+# ----------------------------------------------------------------------------
+
+
+class Transakcija:
+    """
+    Predstavlja prihodek ali odhodek.
+    """
+
+    def __init__(self, opis: str, znesek: int, racun: Racun):
+        self.opis: str = opis
+        self.znesek: int = znesek
+        self.datum: pendulum.DateTime = pendulum.now()
+        self.racun: Racun = racun
+
+    # Izračunane vrednosti ---------------------------------------------------
+
+    """Pove ali je transakcija prihodek."""
+    @property
+    def je_prihodek(self):
+        return self.znesek >= 0
+
+    """Pove ali je transakcija odhodek."""
+    @property
+    def je_odhodek(self):
+        return self.znesek < 0
+
+    # """Vrne vrednost transakcije."""
+    # @property
+    # def vrednost(self):
+    #     return self.znesek
+
+
+class Odhodek(Transakcija):
+    """
+    Odhodek je enkraten znesek, ki ga lahko vzamemo iz investicij,
+    posamezne kuverte ali iz ostalega denarja.
+
+    Če kuverta ni definirana in odhodek ni označen za investicijo
+    predvidevamo da je splošen odhodek.
+    """
+
+    def __init__(self, opis: str, znesek: int, racun: Racun, kuverta=None, je_investicija=False):
+        # Preverimo vrednosti
+        assert kuverta is None or not je_investicija, "Odhodek gre ali iz kuverte ali investicij."
+        assert znesek >= 0, "Količino je treba podati kot nenegativno vrednost."
+
+        super().__init__(
+            opis=opis,
+            znesek=-znesek,
+            racun=racun
+        )
+        self.kuverta: 'Kuverta' = kuverta
+        self.je_investicija: bool = je_investicija
+
+    # Izračunane vrednosti ---------------------------------------------------
+
+    """Pove ali je odhodek iz kuverte."""
+    @property
+    def je_kuverten(self) -> bool:
+        return self.kuverta != None
+
+    """Pove ali je odhodek splošen."""
+    @property
+    def je_splosen(self) -> bool:
+        return not self.je_kuverten and not self.je_investicija
+
+
+class Prihodek(Transakcija):
+    """
+    Predstavlja enkratni prihodek, ki ga razdelimo med kuverte.
+    """
+
+    def __init__(self, opis: str, znesek: int, racun: 'Racun', razpored_po_kuvertah: Dict['Kuverta', int] = {None: None}):
+        # Preverimo podatke
+        assert znesek >= 0, "Prihodek mora bit pozitiven."
+
+        super().__init__(opis=opis, znesek=znesek, racun=racun)
+        self.razpored_po_kuvertah = razpored_po_kuvertah
+
+    # Izračunane vrednosti ---------------------------------------------------
+
+    """Vrne koliko denarja od prihodka smo dali v investicije."""
+
+    @property
+    def investicija(self) -> int:
+        return int(self.znesek * self.racun.davek)
+
+    """Pove koliko denarja nismo razporedili."""
+    @property
+    def nerazporejeno(self) -> int:
+        return self.znesek - sum(self.razpored_po_kuvertah.values()) - self.investicija
+
+    """Pove koliko denarja v transakciji je bilo namenjenega v dano kuverto."""
+
+    def namenjeno_v_kuverto(self, kuverta: 'Kuverta') -> int:
+        return self.razpored_po_kuvertah.get(kuverta, 0)
+
+
+class MesecniPrihodek(Prihodek):
+    """
+    Predstavlja prihodek, ki se ponavlja mesečno.
+    """
+
+    def __init__(self, opis: str, znesek: int, racun: Racun, razpored_po_kuvertah={None: None}):
+        super().__init__(
+            opis=opis,
+            znesek=znesek,
+            racun=racun,
+            razpored_po_kuvertah=razpored_po_kuvertah
+        )
+        self.__konec = None
+
+    # Izračunane vrednosti ---------------------------------------------------
+
+    """Preimenujemo datum iz Transakcije v zacetek."""
+    @property
+    def zacetek(self):
+        return self.datum
+
+    """Vrne datum zaprtja oziroma zdajšnji datum, če se prihodek še ni zaključil."""
+
+    @property
+    def konec(self):
+        return self.__konec or pendulum.now()
+
+    """Vrne koliko časa je ta prihodek že aktiven."""
+    @property
+    def odprt_mescev(self):
+        casovna_razlika = self.konec - self.zacetek
+        return casovna_razlika.months + 1
+
+    """Vrne skupno investicijo čez več mescev."""
+
+    @property
+    def investicija(self):
+        return super().investicija * self.odprt_mescev
+
+    """Pove koliko denarja nismo razporedili."""
+    @property
+    def nerazporejeno(self):
+        return super().nerazporejeno * self.odprt_mescev
+
+    """Pove koliko denarja smo namenili v kuverto do sedaj."""
+
+    def namenjeno_v_kuverto(self, kuverta: 'Kuverta') -> int:
+        return super().namenjeno_v_kuverto(kuverta) * self.odprt_mescev
+
+    # Namere -----------------------------------------------------------------
+
+    """Zaključi mesečni prihodek."""
+
+    def zakljuci(self):
+        self.__konec = pendulum.now()
