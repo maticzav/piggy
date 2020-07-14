@@ -1,5 +1,6 @@
 autopep8==1.5.3
 bottle==0.12.18
+coverage==5.2
 pendulum==2.1.0
 pycodestyle==2.6.0
 python-dateutil==2.8.1

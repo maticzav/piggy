@@ -1,17 +1,30 @@
-from typing import Dict, List
-import pendulum
 import json
+from typing import Dict, List, TypedDict
+
+import pendulum
 
 """
 POMEMBNO:
 
 Nekaj pomembnejših napotkov:
     1. količina je predstavljena s celimi števili v centih (1€ = 100).
-
-TODO: MesecniOdhodek bo bolje predstavljen kot še ena kuverta s posebnimi metodami.
 """
 
 # ----------------------------------------------------------------------------
+
+"""Slovarna predstavitev računa"""
+
+
+class IRacun(TypedDict):
+    ime: str
+    davek: str
+    transakcije: List['ITransakcija']
+    kuverte: Dict[str, 'IKuverta']
+    arhiviran: bool
+
+
+class ITransakcija(TypedDict):
+    pass
 
 
 class Racun:
@@ -29,8 +42,6 @@ class Racun:
         self.transakcije: List['Transakcija'] = list()
         self.kuverte: Dict[str, 'Kuverta'] = dict()
         self.arhiviran: bool = False
-
-        self.__transakcije_po: Dict[str, 'Transakcija'] = dict()
 
     # Izračunane vrednosti ---------------------------------------------------
 
@@ -91,11 +102,17 @@ class Racun:
     def nerazporejeno_razpolozljivo(self) -> int:
         return self.nerazporejeno_namenjeno - self.nerazporejeno_porabljeno
 
-    """Pove koliko denarja je razporejenega v kuvertah."""
+    """Pove koliko denarja je bilo razporejenega v kuverte."""
 
     @property
     def namenjeno_za_kuverte(self) -> int:
         return sum([kuverta.namenjeno for kuverta in self.kuverte.values()])
+
+    """Ustvari predstavitev racuna in vseh pomembnih podrazredov s slovarjem."""
+
+    @property
+    def stanje(self):
+        pass
 
     # Namere -----------------------------------------------------------------
 
@@ -184,7 +201,36 @@ class Racun:
     """Arhivira račun tako, da arhivira use ponavljajoče transakcije in kuverte."""
 
     def arhiviraj(self):
-        pass
+        # Zaključi ponavljajoče prihodke.
+        for prihodek in self.prihodki:
+            if isinstance(prihodek, MesecniPrihodek):
+                prihodek.zakljuci()
+
+        self.arhiviran = True
+        return self
+
+    """Ustvari datoteko s trenutnim stanjem računa."""
+
+    def izvozi_v_datoteko(self, ime_datoteke: str):
+        with open(ime_datoteke, 'w') as datoteka:
+            json.dump(self.stanje, datoteka,
+                      ensure_ascii=False, indent=2)
+
+    # Metode -----------------------------------------------------------------
+
+    """Ustvari nov objekt Racun in vse potrebne podobjekte iz JSON."""
+
+    @classmethod
+    def uvozi_iz_json(cls, json):
+        return cls
+
+    """Uvozi Racun iz JSON datoteke."""
+
+    @classmethod
+    def uvozi_iz_datoteke(cls, ime_datoteke):
+        with open(ime_datoteke) as datoteka:
+            stanje = json.load(datoteka)
+        return cls.uvozi_iz_json(stanje)
 
 
 # ----------------------------------------------------------------------------
