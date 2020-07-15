@@ -29,9 +29,9 @@ uporabniki = {}
 
 # Naloži uporabnike v aplikacijo.
 for ime_datoteke in os.listdir(data_dir):
-    uporabnik = Uporabnik.nalozi_stanje(
+    uporabnik = Uporabnik.uvozi_iz_datoteke(
         os.path.join(data_dir, ime_datoteke))
-    uporabniki[uporabnik.uporabnisko_ime] = uporabnik
+    uporabniki[uporabnik.email] = uporabnik
 
 SESSION_COOKIE = "Authorization"
 
@@ -40,16 +40,25 @@ def auth(fn):
     """Zavije funkcijo in vstavi uporabnika kot spremenljivko `gledalec` ("viewer")."""
 
     def wrapper(*a, **ka):
-        uporabnisko_ime = bottle.request.get_cookie(
+        email = bottle.request.get_cookie(
             SESSION_COOKIE, secret=skrivnost)
         vhodna_stran = bottle.request.path
 
-        if uporabnisko_ime is None:
+        if email is None:
             bottle.redirect(f"/prijava?redirect={vhodna_stran}")
-        gledalec = uporabniki[uporabnisko_ime]
+        gledalec = uporabniki[email]
 
         return fn(*a, **ka, gledalec=gledalec)
     return wrapper
+
+
+class Uporabnik(Uporabnik):
+
+    # Razširjeno -------------------------------------------------------------
+
+    def shrani(self):
+        """Shrani stanje uporabnika."""
+        self.izvozi_v_datoteko(os.path.join(data_dir, f"{self.email}.json"))
 
 
 # Static files ---------------------------------------------------------------
@@ -63,16 +72,31 @@ def files(path):
 
 
 @bottle.get("/")
+@bottle.view("index.html")
 @auth
-def zacetna_stran(gledalec: 'Uporabnik'):
-    return f"Hej {gledalec.uporabnisko_ime}"
+def domov(gledalec: 'Uporabnik'):
+    return {
+        "racuni": gledalec.racuni.values()
+    }
 
 
-@bottle.get("/racun/:ime")
+@bottle.get("/racun/<ime>")
+@bottle.view("racun.html")
 @auth
-def racun():
-    return f"Racun {True}"
+def racun(ime: str, gledalec: 'Uporabnik'):
+    racun = gledalec.racuni.get(ime)
 
+    if racun is None:
+        return bottle.HTTPError(404)
+
+    return {"racun": racun}
+
+# Errors
+
+
+@bottle.error(404)
+def error404(error):
+    return bottle.template("error.html")
 # API
 
 
@@ -90,15 +114,16 @@ def ustvari_racun(gledalec: 'Uporabnik'):
 
 
 @bottle.get("/prijava")
+@bottle.view("prijava.html")
 def prijava_get():
     redirect = bottle.request.query.getunicode("redirect", "/")
-    return bottle.template("prijava.html", redirect=redirect)
+    return {"redirect": redirect}
 
 
 @bottle.post("/prijava")
 def prijava_post():
     # Form data
-    uporabnisko_ime = bottle.request.forms.getunicode('uporabnisko_ime')
+    email = bottle.request.forms.getunicode('email')
     geslo = bottle.request.forms.getunicode('geslo')
     redirect = bottle.request.forms.getunicode('redirect')
 
@@ -106,19 +131,19 @@ def prijava_post():
     h.update(geslo.encode(encoding='utf-8'))
     zasifrirano_geslo = h.hexdigest()
 
-    if uporabnisko_ime not in uporabniki:
-        uporabnik = Uporabnik(
-            uporabnisko_ime,
-            zasifrirano_geslo,
-        )
-        uporabniki[uporabnisko_ime] = uporabnik
+    if email not in uporabniki:
+        uporabnik = Uporabnik(email, zasifrirano_geslo)
+        uporabniki[email] = uporabnik
+        uporabnik.shrani()
     else:
-        uporabnik = uporabniki[uporabnisko_ime]
+        uporabnik = uporabniki[email]
+        # TODO: povej, da je napačno geslo.
         uporabnik.preveri_geslo(zasifrirano_geslo)
 
     # Ustvari sejo
     bottle.response.set_cookie(
-        SESSION_COOKIE, uporabnik.uporabnisko_ime, path='/', secret=skrivnost)
+        SESSION_COOKIE, uporabnik.email, path='/', secret=skrivnost)
+
     bottle.redirect('/')
 
 
