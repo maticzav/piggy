@@ -1,0 +1,18 @@
+{
+  "name": "piggy",
+  "version": "1.0.0",
+  "author": "maticzav <matic.zavadlal@gmail.com>",
+  "scripts": {
+    "compile:css": "postcss styles/index.css -o public/index.css"
+  },
+  "repository": "git@github.com:maticzav/piggy.git",
+  "dependencies": {},
+  "devDependencies": {
+    "@tailwindcss/ui": "^0.3.1",
+    "autoprefixer": "^9.8.5",
+    "postcss": "^7.0.32",
+    "postcss-cli": "^7.1.1",
+    "tailwindcss": "^1.4.6"
+  },
+  "license": "MIT"
+}

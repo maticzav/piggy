@@ -1,5 +1,5 @@
 import json
-from typing import Dict, List, TypedDict
+from typing import Dict, List, TypedDict, Literal
 
 import pendulum
 
@@ -12,24 +12,84 @@ Nekaj pomembnejših napotkov:
 
 # ----------------------------------------------------------------------------
 
-# """Slovarna predstavitev računa"""
+
+class Uporabnik:
+    """Predstavlja posameznega uporabnika in njegov račun."""
+
+    def __init__(self, uporabnisko_ime: str, geslo: str):
+        self.uporabnisko_ime: str = uporabnisko_ime
+        self.geslo: str = geslo
+        self.racuni: Dict[str, 'Racun'] = {}
+
+    # Izračunane vrednosti ---------------------------------------------------
+
+    """Slovarni prikaz uporabnika."""
+
+    @property
+    def stanje(self):
+        return {
+            'uporabnisko_ime': self.uporabnisko_ime,
+            'geslo': self.zasifrirano_geslo,
+            'racuni': [{
+                'ime': racun.ime,
+                'racun': racun.stanje
+            } for racun in self.racuni]
+        }
+
+    # Namere -----------------------------------------------------------------
+
+    """Preveri ali je geslo pravilno."""
+
+    def pravilno_geslo(self, geslo: str) -> bool:
+        return self.zasifrirano_geslo == geslo
+
+    """Ustvari nov račun."""
+
+    def ustvari_racun(self, ime: str, davek: float) -> 'Racun':
+        racun = Racun(ime, davek)
+        return self.dodaj_racun(racun)
+
+    """Dodaj račun."""
+
+    def dodaj_racun(self, racun: 'Racun') -> 'Racun':
+        self.racuni[racun.ime] = racun
+        return racun
+
+    """Arhivira račun."""
+
+    def arhiviraj_racun(self, ime: str) -> 'Racun':
+        return self.racuni[ime].arhiviraj()
+
+    """Shrani stanje v datateko."""
+
+    def izvozi_v_datoteko(self, ime_datoteke: str):
+        with open(ime_datoteke, 'w') as datoteka:
+            json.dump(self.stanje, datoteka, ensure_ascii=False, indent=2)
+
+    # Metode -----------------------------------------------------------------
+
+    @classmethod
+    def uvozi_iz_json(cls, json):
+        uporabnisko_ime = json['uporabnisko_ime']
+        geslo = json['geslo']
+
+        # Sestavi uporabnika
+        uporabnik = cls(uporabnisko_ime, geslo)
+        for racun in json["racuni"]:
+            uporabnik.dodaj_racun(Racun.nalozi_iz_slovarja(racun["racun"]))
+
+        return uporabnik
+
+    """Naloži stanje iz datoteke."""
+
+    @classmethod
+    def uvozi_iz_datoteke(cls, ime_datoteke: str):
+        with open(ime_datoteke) as datoteka:
+            stanje = json.load(datoteka)
+            return cls.uvozi_iz_json(stanje)
 
 
-# class IRacun(TypedDict):
-#     ime: str
-#     davek: str
-#     """Najprej je treba naložit kuverte in mesečne odhodke, šele potem transakcije."""
-#     kuverte: Dict[str, 'IKuverta']
-#     mesecni_odhodki: Dict[str, 'IMesecniOdhodek']
-#     arhiviran: bool
-
-
-# class ITransakcija(TypedDict):
-#     pass
-
-
-# class IMesecniOdhodek(TypedDict):
-#     pass
+# ----------------------------------------------------------------------------
 
 
 class Racun:
@@ -338,6 +398,9 @@ class Racun:
 
 # ----------------------------------------------------------------------------
 
+BarvaKuverte = Literal["modra", "rdeca", "zelena", "rumena", "siva"]
+IkonaKuverte = Literal["kuverta", "avto", "morje", "banka"]
+
 
 class Kuverta:
     """
@@ -346,24 +409,12 @@ class Kuverta:
 
     V kuverto dodajamo denar iz mesečnih prihodkov in začasnih prihodkov.
     Edina limita porabe v kuverti je prazna kuverta.
-
-    Barve:
-        - modra
-        - rdeca
-        - zelena
-        - rumena
-        - siva
-    Ikone:
-        - kuverta
-        - avto
-        - morje
-        - banka
     """
 
     razpolozljive_barve = ["modra", "rdeca", "zelena", "rumena", "siva"]
     razpolozljive_ikone = ["kuverta", "avto", "morje", "banka"]
 
-    def __init__(self, ime: str, racun: Racun, barva: str, ikona: str):
+    def __init__(self, ime: str, racun: Racun, barva: BarvaKuverte, ikona: IkonaKuverte):
         # Preveri vrednosti
         assert barva in Kuverta.razpolozljive_barve, "Neznana barva."
         assert ikona in Kuverta.razpolozljive_ikone, "Neznana ikona."
