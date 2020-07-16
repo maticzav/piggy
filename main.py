@@ -19,21 +19,12 @@ skrivnost = os.getenv("SECRET", "skrivnost")
 data_dir = appdirs.user_data_dir(
     ime_aplikacije, avtor_aplikacije, verzije_aplikacije[-1])
 
-# Ustvari mapo s podatki aplikacije, če ta še ne obstaja.
-if not os.path.exists(data_dir):
-    os.makedirs(data_dir)
+
+SESSION_COOKIE = "Authorization"
 
 # Seje -----------------------------------------------------------------------
 
 uporabniki = {}
-
-# Naloži uporabnike v aplikacijo.
-for ime_datoteke in os.listdir(data_dir):
-    uporabnik = Uporabnik.uvozi_iz_datoteke(
-        os.path.join(data_dir, ime_datoteke))
-    uporabniki[uporabnik.email] = uporabnik
-
-SESSION_COOKIE = "Authorization"
 
 # Wrappers and Extensions
 
@@ -76,6 +67,7 @@ def files(path):
 @bottle.view("index.html")
 @auth
 def domov(gledalec: 'Uporabnik'):
+    print(gledalec.racuni.values())
     return {
         "racuni": gledalec.racuni.values()
     }
@@ -105,6 +97,7 @@ def racun(ime: str, gledalec: 'Uporabnik'):
 @bottle.error(404)
 def error404(error):
     return bottle.template("error.html")
+
 # API
 
 
@@ -115,8 +108,7 @@ def ustvari_racun(gledalec: 'Uporabnik'):
     davek = int(bottle.request.forms.getunicode("davek"))
 
     racun = gledalec.ustvari_racun(ime, davek / 100)
-    # TODO: doesn't work for whatever reason
-    # gledalec.shrani()
+    gledalec.shrani()
 
     bottle.redirect(f"/racun/{racun.ime}")
 
@@ -163,7 +155,18 @@ def odjava():
     bottle.redirect('/')
 
 
-# ----------------------------------------------------------------------------
+# Zaženi ---------------------------------------------------------------------
 
 if __name__ == '__main__':
+    # Ustvari mapo s podatki aplikacije, če ta še ne obstaja.
+    if not os.path.exists(data_dir):
+        os.makedirs(data_dir)
+
+    # Naloži uporabnike v aplikacijo.
+    for ime_datoteke in os.listdir(data_dir):
+        uporabnik = Uporabnik.uvozi_iz_datoteke(
+            os.path.join(data_dir, ime_datoteke))
+        uporabniki[uporabnik.email] = uporabnik
+
+    # Zaženi spletni vmesnik.
     bottle.run(debug=True, reloader=True)

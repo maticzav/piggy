@@ -32,7 +32,7 @@ class Uporabnik:
             'racuni': [{
                 'ime': racun.ime,
                 'racun': racun.stanje
-            } for racun in self.racuni]
+            } for racun in self.racuni.values()]
         }
 
     # Namere -----------------------------------------------------------------
