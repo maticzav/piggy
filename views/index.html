@@ -1,3 +1,84 @@
 % rebase("_page.html", title=None)
 
-<h1>Hey</h1>
+<!-- Container -->
+
+<div class="container mx-auto px-4 sm:px-6 lg:px-8">
+  <!-- Računi -->
+
+  <!-- Header -->
+
+  <div
+    class="flex items-center justify-between flex-wrap sm:flex-no-wrap px-8 lg:px-10"
+  >
+    <div class="mt-2">
+      <h3 class="text-lg leading-6 font-medium text-gray-900">
+        Računi
+      </h3>
+    </div>
+    <!--  -->
+    <div class="mt-2 flex-shrink-0">
+      <span class="inline-flex rounded-md shadow-sm">
+        <a
+          href="/ustvari_racun"
+          class="relative inline-flex items-center px-4 py-2 border border-transparent text-sm leading-5 font-medium rounded-md text-white bg-pink-600 hover:bg-pink-500 focus:outline-none focus:shadow-outline-pink focus:border-pink-700 active:bg-pink-700"
+        >
+          Ustvari nov račun
+        </a>
+      </span>
+    </div>
+  </div>
+
+  <!-- List -->
+
+  <div class="flex flex-col">
+    <div class="py-5 overflow-x-auto px-6 lg:px-8">
+      <div
+        class="align-middle inline-block min-w-full shadow overflow-hidden rounded-lg border-b border-gray-200"
+      >
+        <!-- Table -->
+        <table class="min-w-full">
+          <thead>
+            <tr>
+              <th
+                class="px-6 py-3 border-b border-gray-200 bg-gray-50 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider"
+              >
+                Ime računa
+              </th>
+              <th
+                class="px-6 py-3 border-b border-gray-200 bg-gray-50 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider"
+              >
+                Davek
+              </th>
+              <th class="px-6 py-3 border-b border-gray-200 bg-gray-50"></th>
+            </tr>
+          </thead>
+          <tbody class="bg-white">
+            <!-- Posamezen račun -->
+            <tr>
+              <td
+                class="px-6 py-4 whitespace-no-wrap border-b border-gray-200 text-sm leading-5 font-medium text-gray-900"
+              >
+                {{"nekineki"}}
+              </td>
+
+              <td
+                class="px-6 py-4 whitespace-no-wrap border-b border-gray-200 text-sm leading-5 text-gray-500"
+              >
+                {{""davek""}}
+              </td>
+              <td
+                class="px-6 py-4 whitespace-no-wrap text-right border-b border-gray-200 text-sm leading-5 font-medium"
+              >
+                <a
+                  href="/racun/{{ime}}"
+                  class="text-indigo-600 hover:text-indigo-900"
+                  >Poglej</a
+                >
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

@@ -17,12 +17,12 @@
       </a>
     </div>
 
-    <!-- Close navigation -->
+    <!-- Open navigation -->
 
     <div class="mr-2 -my-2 md:hidden">
       <button
         type="button"
-        onclick="closeNavigation()"
+        onclick="openNavigation()"
         class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 focus:text-gray-500 transition duration-150 ease-in-out"
       >
         <svg
@@ -65,15 +65,18 @@
       </span>
     </div>
 
-    <!-- Mobile navigation -->
+    <!-- Mobile -->
 
     <div
       id="mobile-nav"
-      class="absolute z-50 top-0 inset-x-0 p-2 transition transform origin-top-right md:hidden opacity-0 scale-95 duration-200 ease-out"
+      class="absolute top-0 inset-x-0 p-2 transition transform origin-top-right md:hidden opacity-0 scale-95 duration-200 ease-out hidden"
     >
       <div class="rounded-lg shadow-lg">
         <div class="rounded-lg shadow-xs bg-white divide-y-2 divide-gray-50">
+          <!-- Navigation -->
+
           <div class="pt-5 pb-6 px-5 space-y-6">
+            <!-- Upper -->
             <div class="flex items-center justify-between">
               <!-- Logo -->
               <div>
@@ -84,11 +87,11 @@
                 />
               </div>
 
-              <!-- Open navigation -->
-              <div class="-mr-2">
+              <!-- Close navigation -->
+              <div class="">
                 <button
                   type="button"
-                  onclick="openNavigation()"
+                  onclick="closeNavigation()"
                   class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 focus:text-gray-500 transition duration-150 ease-in-out"
                 >
                   <svg
@@ -108,12 +111,12 @@
               </div>
             </div>
 
-            <!-- Navigation -->
+            <!-- Middle items -->
             <div>
               <nav class="grid grid-cols-1 gap-7">
                 <!-- Navigation Item: Enak je pri vseh -->
                 <a
-                  href="#"
+                  href="/"
                   class="-m-3 p-3 flex items-center space-x-4 rounded-lg hover:bg-gray-50 transition ease-in-out duration-150"
                 >
                   <div
@@ -158,6 +161,8 @@
               </span>
             </div>
           </div>
+
+          <!--  -->
         </div>
       </div>
     </div>
@@ -219,15 +224,19 @@
 
   /* Opens mobile navigation. */
   function openNavigation() {
-    alert('OPEN')
-    navigationContainer.classList.add('opacity-100', 'scale-100')
-    navigationContainer.classList.remove('opacity-0', 'scale-95')
+    navigationContainer.classList.remove('hidden')
+    setTimeout(() => {
+      navigationContainer.classList.add('opacity-100', 'scale-100')
+      navigationContainer.classList.remove('opacity-0', 'scale-95')
+    }, 0)
   }
 
   /* Closes mobile navigation */
   function closeNavigation() {
-    alert('CLOSE')
     navigationContainer.classList.add('opacity-0', 'scale-95')
     navigationContainer.classList.remove('opacity-100', 'scale-100')
+    setTimeout(() => {
+      navigationContainer.classList.add('hidden')
+    }, 300)
   }
 </script>

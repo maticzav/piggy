@@ -35,6 +35,17 @@ for ime_datoteke in os.listdir(data_dir):
 
 SESSION_COOKIE = "Authorization"
 
+# Wrappers and Extensions
+
+
+class Uporabnik(Uporabnik):
+
+    # Razširjeno -------------------------------------------------------------
+
+    def shrani(self):
+        """Shrani stanje uporabnika."""
+        self.izvozi_v_datoteko(os.path.join(data_dir, f"{self.email}.json"))
+
 
 def auth(fn):
     """Zavije funkcijo in vstavi uporabnika kot spremenljivko `gledalec` ("viewer")."""
@@ -50,16 +61,6 @@ def auth(fn):
 
         return fn(*a, **ka, gledalec=gledalec)
     return wrapper
-
-
-class Uporabnik(Uporabnik):
-
-    # Razširjeno -------------------------------------------------------------
-
-    def shrani(self):
-        """Shrani stanje uporabnika."""
-        self.izvozi_v_datoteko(os.path.join(data_dir, f"{self.email}.json"))
-
 
 # Static files ---------------------------------------------------------------
 
@@ -78,6 +79,13 @@ def domov(gledalec: 'Uporabnik'):
     return {
         "racuni": gledalec.racuni.values()
     }
+
+
+@bottle.get("/ustvari_racun")
+@bottle.view("ustvari_racun.html")
+@auth
+def ustvari_racun(gledalec: 'Uporabnik'):
+    return {}
 
 
 @bottle.get("/racun/<ime>")
@@ -100,13 +108,15 @@ def error404(error):
 # API
 
 
-@bottle.put('/api/racun')
+@bottle.post('/api/racun')
 @auth
 def ustvari_racun(gledalec: 'Uporabnik'):
     ime = bottle.request.forms.getunicode("ime")
-    davek = float(bottle.request.forms.getunicode("davek"))
+    davek = int(bottle.request.forms.getunicode("davek"))
 
-    racun = gledalec.ustvari_racun(ime, davek)
+    racun = gledalec.ustvari_racun(ime, davek / 100)
+    # TODO: doesn't work for whatever reason
+    # gledalec.shrani()
 
     bottle.redirect(f"/racun/{racun.ime}")
 
