@@ -5,27 +5,15 @@
 <div class="container my-10 mx-auto px-4 sm:px-6 lg:px-8 min-h-screen">
   <!-- Računi -->
 
+  % include("components/_heading.html", heading="Računi")
+
   <!-- Header -->
 
   <div
-    class="flex items-center justify-between flex-wrap sm:flex-no-wrap px-8 lg:px-10"
+    class="flex justify-center md:justify-end flex-wrap sm:flex-no-wrap px-8 lg:px-10"
   >
-    <div class="mt-2">
-      <h3 class="text-lg leading-6 font-medium text-gray-900">
-        Računi
-      </h3>
-    </div>
-    <!--  -->
-    <div class="mt-2 flex-shrink-0">
-      <span class="inline-flex rounded-md shadow-sm">
-        <a
-          href="/ustvari_racun"
-          class="relative inline-flex items-center px-4 py-2 border border-transparent text-sm leading-5 font-medium rounded-md text-white bg-pink-600 hover:bg-pink-500 focus:outline-none focus:shadow-outline-pink focus:border-pink-700 active:bg-pink-700"
-        >
-          Ustvari nov račun
-        </a>
-      </span>
-    </div>
+    <!-- prettier-ignore -->
+    % include("components/_add.html", href=f"/ustvari_racun", label="Ustvari račun")
   </div>
 
   <!-- List -->
@@ -45,9 +33,19 @@
                 Ime računa
               </th>
               <th
-                class="px-6 py-3 border-b border-gray-200 bg-gray-50 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider"
+                class="hidden sm:table-cell px-6 py-3 border-b border-gray-200 bg-gray-50 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider"
+              >
+                Razpoložljivo
+              </th>
+              <th
+                class="hidden md:table-cell px-6 py-3 border-b border-gray-200 bg-gray-50 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider"
               >
                 Davek
+              </th>
+              <th
+                class="hidden md:table-cell px-6 py-3 border-b border-gray-200 bg-gray-50 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider"
+              >
+                Stanje
               </th>
               <th class="px-6 py-3 border-b border-gray-200 bg-gray-50"></th>
             </tr>
@@ -61,11 +59,26 @@
               >
                 {{racun.ime}}
               </td>
-
               <td
-                class="px-6 py-4 whitespace-no-wrap border-b border-gray-200 text-sm leading-5 text-gray-500"
+                class="hidden sm:table-cell px-6 py-4 whitespace-no-wrap border-b border-gray-200 text-sm leading-5 text-gray-500"
+              >
+                {{racun.nerazporejeno_razpolozljivo}}€
+              </td>
+              <td
+                class="hidden md:table-cell px-6 py-4 whitespace-no-wrap border-b border-gray-200 text-sm leading-5 text-gray-500"
               >
                 {{int(racun.davek * 100)}}%
+              </td>
+              <td
+                class="hidden md:table-cell px-6 py-4 whitespace-no-wrap border-b border-gray-200 text-sm leading-5 text-gray-500"
+              >
+                % if racun.arhiviran:
+                <!-- prettier-ignore -->
+                % include("components/_badge.html", label="Arhiviran", color="red") 
+                % else:
+                <!-- prettier-ignore -->
+                % include("components/_badge.html", label="Aktiven", color="green")
+                % end
               </td>
               <td
                 class="px-6 py-4 whitespace-no-wrap text-right border-b border-gray-200 text-sm leading-5 font-medium"

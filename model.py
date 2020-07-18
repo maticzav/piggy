@@ -76,7 +76,7 @@ class Uporabnik:
         # Sestavi uporabnika
         uporabnik = cls(email, geslo)
         for racun in json["racuni"]:
-            uporabnik.dodaj_racun(Racun.nalozi_iz_slovarja(racun["racun"]))
+            uporabnik.dodaj_racun(Racun.uvozi_iz_json(racun["racun"]))
 
         return uporabnik
 
@@ -104,7 +104,7 @@ class Racun:
         self.ime: str = ime
         self.davek: float = davek
         self.transakcije: List['Transakcija'] = list()
-        self.kuverte: Dict[str, 'Kuverta'] = dict()
+        self._kuverte: Dict[str, 'Kuverta'] = dict()
         self.arhiviran: bool = False
 
     # Izračunane vrednosti ---------------------------------------------------
@@ -164,7 +164,17 @@ class Racun:
     @property
     def namenjeno_za_kuverte(self) -> int:
         """Pove koliko denarja je bilo razporejenega v kuverte."""
-        return sum([kuverta.namenjeno for kuverta in self.kuverte.values()])
+        return sum([kuverta.namenjeno for kuverta in self.kuverte])
+
+    @property
+    def kuverte(self) -> List['Kuverta']:
+        """Vrne kuverte iz računa."""
+        return self._kuverte.values()
+
+    @property
+    def kuverta(self) -> Dict[str, 'Kuverta']:
+        """Vrne slovar kuvert po imenih."""
+        return self._kuverte
 
     @property
     def stanje(self):
@@ -180,7 +190,7 @@ class Racun:
                 'barva': kuverta.barva,
                 'ikona': kuverta.ikona,
                 'znesek': kuverta.znesek if isinstance(kuverta, MesecniOdhodek) else None
-            } for kuverta in self.kuverte.values()],
+            } for kuverta in self.kuverte],
             'transakcije': [{
                 'kind': type(transakcija).__name__,
                 'opis': transakcija.opis,
@@ -233,7 +243,7 @@ class Racun:
             znesek=znesek,
             racun=self
         )
-        self.kuverte[hash(kuverta)] = kuverta
+        self._kuverte[kuverta.ime] = kuverta
         return kuverta
 
     def ustvari_odhodek(self, opis: str, znesek: int, datum: pendulum.DateTime = pendulum.now()) -> 'Odhodek':
@@ -279,7 +289,7 @@ class Racun:
             ikona=ikona,
             racun=self
         )
-        self.kuverte[hash(kuverta)] = kuverta
+        self._kuverte[kuverta.ime] = kuverta
         return kuverta
 
     def arhiviraj(self):

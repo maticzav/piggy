@@ -1,0 +1,86 @@
+% rebase("_page.html", title=None)
+
+<!-- Container -->
+<div class="container mx-auto px-4 sm:px-6 lg:px-8">
+  <!-- Name -->
+
+  <!-- Title -->
+  % include("components/_heading.html", heading=kuverta.ime)
+
+  <!-- Overview -->
+
+  <div class=""></div>
+
+  <!-- Transakcije -->
+  <div class="my-10">
+    <div
+      class="flex items-center justify-between flex-wrap sm:flex-no-wrap px-8 lg:px-10"
+    >
+      <div class="mt-2">
+        <h3 class="text-lg leading-6 font-medium text-gray-900">
+          Transakcije
+        </h3>
+      </div>
+
+      <!-- prettier-ignore -->
+      % include("components/_add.html", href=f"/racun/{racun.ime}/ustvari_transakcijo", label="Dodaj transakcijo")
+    </div>
+
+    <!-- Seznam transakcij. -->
+
+    <div class="mt-10 flex flex-col">
+      <div class="-my-2 py-2 overflow-x-auto sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
+        <div
+          class="align-middle inline-block min-w-full shadow overflow-hidden sm:rounded-lg border-b border-gray-200"
+        >
+          <table class="min-w-full">
+            <thead>
+              <tr>
+                <th
+                  class="px-6 py-3 border-b border-gray-200 bg-gray-50 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Opis
+                </th>
+                <th
+                  class="px-6 py-3 border-b border-gray-200 bg-gray-50 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Znesek
+                </th>
+                <th
+                  class="px-6 py-3 border-b border-gray-200 bg-gray-50 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Kuverta
+                </th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <!-- Posamezna transakcija -->
+              <tr class="bg-white">
+                <td
+                  class="px-6 py-4 whitespace-no-wrap text-sm leading-5 font-medium text-gray-900"
+                >
+                  Bernard Lane
+                </td>
+                <td
+                  class="px-6 py-4 whitespace-no-wrap text-sm leading-5 text-gray-500"
+                >
+                  Director, Human Resources
+                </td>
+                <td
+                  class="px-6 py-4 whitespace-no-wrap text-sm leading-5 text-gray-500"
+                >
+                  bernardlane@example.com
+                </td>
+              </tr>
+
+              <!--  -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!--  -->
+  </div>
+</div>

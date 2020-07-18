@@ -4,234 +4,201 @@
 <div class="container mx-auto px-4 sm:px-6 lg:px-8">
   <!-- Name -->
 
+  <!-- Title -->
+  <div class="text-center">
+    % include("components/_heading.html", heading=racun.ime)
+
+    <!--  -->
+    <div class="-mt-10">
+      % if racun.arhiviran:
+      <!-- prettier-ignore -->
+      % include("components/_badge.html", label="Arhiviran", color="red")
+      % else:
+      <!-- prettier-ignore -->
+      % include("components/_badge.html", label="Aktiven", color="green")
+      % end
+    </div>
+  </div>
+
   <!-- Overview -->
 
+  <div class=""></div>
+
   <!-- Kuverte -->
-  <div>
-    <h2 class="text-gray-500 text-xs font-medium uppercase tracking-wide">
-      Kuverte
-    </h2>
+  <div class="mt-20 mb-5">
+    <div
+      class="flex items-center justify-between flex-no-wrap px-4 md:px-8 lg:px-10"
+    >
+      % include("components/_small_heading.html", heading="Kuverte")
+      <!-- prettier-ignore -->
+      % include("components/_add.html", href=f"/racun/{racun.ime}/ustvari_kuverto", label="Ustvari kuverto")
+    </div>
 
     <!-- Kuverte grid -->
     <ul
-      class="mt-3 grid grid-cols-1 gap-5 sm:gap-6 sm:grid-cols-2 lg:grid-cols-4"
+      class="mx-3 mt-5 grid grid-cols-2 gap-5 sm:gap-6 sm:grid-cols-3 lg:grid-cols-4"
     >
-      <!-- Kuverta -->
+      <!-- Brez kuvert -->
+      % if len(kuverte) == 0:
+      <div
+        class="w-full text-center my-5 col-span-2 md:col-span-3 lg:col-span-4"
+      >
+        <p class="text-sm text-gray-400">
+          Izgleda, da v tem računu še ni kuvert.
+        </p>
+      </div>
+      % end
 
+      <!-- Kuverta -->
+      % for kuverta in kuverte:
       <li
         class="col-span-1 flex items-center bg-white border border-gray-200 rounded-md shadow-sm overflow-hidden"
       >
+        <!-- prettier-ignore -->
+        <%
+          # Tailwind color
+          def tw_color(barva):
+            if barva == "rdeca":
+              return "text-white bg-red-400"
+            elif barva == "modra":
+              return "text-white bg-blue-400"
+            elif barva == "zelena":
+              return "text-white bg-green-300"
+            elif barva == "rumena":
+              return "text-black bg-yellow-100"
+            elif barva == "siva":
+              return "text-black bg-gray-100 text"
+            end
+          end
+        %>
+        <!-- Icon -->
         <div
-          class="flex-shrink-0 flex items-center justify-center w-16 h-16 text-white text-center text-sm leading-5 font-medium bg-pink-600"
+          class="hidden sm:flex flex-shrink-0 items-center justify-center w-16 h-16 text-center text-sm leading-5 font-medium {{tw_color(kuverta.barva)}}"
         >
-          GA
+          % if kuverta.ikona == "kuverta":
+          <svg
+            fill="none"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            class="h-7 w-7"
+          >
+            <path
+              d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
+            ></path>
+          </svg>
+          % end
+          <!-- prettier-ignore -->
+          % if kuverta.ikona == "avto":
+          <svg viewBox="0 0 512 512" class="h-8 w-8">
+            <path
+              fill="currentColor"
+              d="M499.99 192.01h-52.21l-31.36-77.88C404.24 83.84 374.86 64 342.22 64H169.78c-32.64 0-62.02 19.84-74.21 50.12L64.21 192h-52.2C4.2 192-1.53 199.34.37 206.91l6 24A12.01 12.01 0 0 0 18.01 240h11.31C21.04 254.16 16 270.41 16 287.99V424c0 13.25 10.75 24 24 24h16c13.25 0 24-10.75 24-24v-24h352v24c0 13.25 10.75 24 24 24h16c13.25 0 24-10.75 24-24V288c0-17.59-5.04-33.84-13.31-47.99H494c5.51 0 10.31-3.75 11.64-9.09l6-24c1.89-7.58-3.84-14.91-11.65-14.91zM140.1 132.05C145 119.87 156.65 112 169.78 112h172.44c13.13 0 24.78 7.87 29.68 20.05l24.13 59.94H115.97l24.13-59.94zM448 336c0 8.82-7.18 16-16 16H80c-8.82 0-16-7.18-16-16v-48c0-26.47 21.53-48 48-48h288c26.47 0 48 21.53 48 48v48zm-320-72.01c-19.2 0-32 12.76-32 31.91s12.8 31.91 32 31.91 48 3.19 48-15.96c0-19.14-28.8-47.86-48-47.86zm256 0c-19.2 0-48 28.72-48 47.86 0 19.15 28.8 15.96 48 15.96s32-12.76 32-31.91c0-19.14-12.8-31.91-32-31.91z"
+            ></path>
+          </svg>
+          % end
+          <!-- prettier-ignore -->
+          % if kuverta.ikona == "morje":
+          <svg viewBox="0 0 640 512" class="h-8 w-8">
+            <path
+              fill="currentColor"
+              d="M443.48 18.08C409.77 5.81 375.31 0 341.41 0c-90.47 0-176.84 41.45-233.44 112.33-6.7 8.39-2.67 21.04 7.42 24.71l229.18 83.41L254.84 464H16c-8.84 0-16 7.16-16 16v16c0 8.84 7.16 16 16 16h544c8.84 0 16-7.16 16-16v-16c0-8.84-7.16-16-16-16H306.01l83.67-227.12 228.66 83.22c1.83.67 3.7.98 5.53.98 8.27 0 15.83-6.35 16.04-15.14 3.03-124.66-72.77-242.85-196.43-287.86zm9.1 190.61L307.4 155.85c14.25-25.26 30.54-47.29 48.16-63.97 25.34-24.03 50.03-34.16 67.41-27.77 17.53 6.38 29.84 29.92 33.84 64.62 2.77 24.11 1.09 51.45-4.23 79.96zm-274.63-99.95c42.89-36.66 97.81-58.24 154.55-60.33-4.47 3.76-36.86 28.45-70.29 91l-84.26-30.67zm319.82 116.4c7.38-35.07 12.06-77.07 4.11-118.28 45.77 38.28 77.14 91.67 86.87 151.39l-90.98-33.11z"
+            ></path>
+          </svg>
+          % end
+          <!-- prettier-ignore -->
+          % if kuverta.ikona == "banka":
+          <svg viewBox="0 0 576 512" class="h-8 w-8">
+            <path
+              fill="currentColor"
+              d="M560 224h-29.5c-11.1-25.3-28.7-46.9-50.5-63.4V96h-16c-30.3 0-57.8 10.1-81 26.2.4-3.4 1-6.7 1-10.2C384 50.1 333.9 0 272 0S160 50.1 160 112c0 9.7 1.5 19 3.8 27.9C114.9 159.8 78 203.1 67.2 256H56c-14.8 0-26.5-13.5-23.5-28.8C34.7 215.8 45.4 208 57 208h1c3.3 0 6-2.7 6-6v-20c0-3.3-2.7-6-6-6-28.5 0-53.9 20.4-57.5 48.6C-3.9 258.8 22.7 288 56 288h8c0 52.2 25.4 98.1 64 127.3V496c0 8.8 7.2 16 16 16h112c8.8 0 16-7.2 16-16v-48h64v48c0 8.8 7.2 16 16 16h112c8.8 0 16-7.2 16-16v-80.9c11.7-9 22.4-19.3 31.3-31.1H560c8.8 0 16-7.2 16-16V240c0-8.8-7.2-16-16-16zM272 48c35.3 0 64 28.7 64 64 0 5.6-.9 10.9-2.3 16H224c-4.5 0-8.8 1-13.3 1.3-1.6-5.5-2.7-11.3-2.7-17.3 0-35.3 28.7-64 64-64zm256 288h-40.6c-23.5 31.1-19.4 27.9-55.4 55.4V464h-48v-64H224v64h-48v-72.6c-14.6-11-64-39.8-64-103.4 0-61.8 50.2-112 112-112h167.4c9.5-7.6 22.2-19.3 40.6-26.2v34.7c45.4 34.4 44.2 35.2 67.1 87.5H528v64zm-96-80c-8.8 0-16 7.2-16 16s7.2 16 16 16 16-7.2 16-16-7.2-16-16-16z"
+            ></path>
+          </svg>
+          % end
         </div>
+        <!-- Info -->
+
         <div class="flex-1 px-4 py-2 truncate">
           <a
-            href="#"
-            class="text-gray-900 text-sm leading-5 font-medium hover:text-gray-600 transition ease-in-out duration-150"
-            >Graph API</a
+            href="/racun/{{racun.ime}}/kuverta/{{kuverta.ime}}"
+            class="text-gray-900 w-full text-sm leading-5 font-medium hover:text-gray-600 transition ease-in-out duration-150"
           >
-          <p class="text-sm leading-5 text-gray-500">16 Members</p>
-        </div>
-        <div class="flex-shrink-0 pr-2">
-          <button
-            class="w-8 h-8 inline-flex items-center justify-center text-gray-400 rounded-full bg-transparent hover:text-gray-500 focus:outline-none focus:text-gray-500 focus:bg-gray-100 transition ease-in-out duration-150"
-          >
-            <svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
-              <path
-                d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"
-              />
-            </svg>
-          </button>
+            {{kuverta.ime}}
+          </a>
+          <p class="text-sm leading-5 text-gray-500">
+            {{kuverta.razpolozljivo}}€
+          </p>
         </div>
       </li>
-      <!--  -->
+      % end
     </ul>
   </div>
 
   <!-- Transakcije -->
+  <div class="my-10">
+    <div class="flex items-center justify-between flex-no-wrap px-8 lg:px-10">
+      % include("components/_small_heading.html", heading="Transakcije")
+      <!-- prettier-ignore -->
+      % include("components/_add.html", href=f"/racun/{racun.ime}/ustvari_transakcijo", label="Dodaj transakcijo")
+    </div>
 
-  <div class="flex flex-col">
-    <div class="-my-2 py-2 overflow-x-auto sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
-      <div
-        class="align-middle inline-block min-w-full shadow overflow-hidden sm:rounded-lg border-b border-gray-200"
-      >
-        <table class="min-w-full">
-          <thead>
-            <tr>
-              <th
-                class="px-6 py-3 border-b border-gray-200 bg-gray-50 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider"
-              >
-                Name
-              </th>
-              <th
-                class="px-6 py-3 border-b border-gray-200 bg-gray-50 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider"
-              >
-                Title
-              </th>
-              <th
-                class="px-6 py-3 border-b border-gray-200 bg-gray-50 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider"
-              >
-                Email
-              </th>
-              <th
-                class="px-6 py-3 border-b border-gray-200 bg-gray-50 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider"
-              >
-                Role
-              </th>
-              <th class="px-6 py-3 border-b border-gray-200 bg-gray-50"></th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr class="bg-white">
-              <td
-                class="px-6 py-4 whitespace-no-wrap text-sm leading-5 font-medium text-gray-900"
-              >
-                Bernard Lane
-              </td>
-              <td
-                class="px-6 py-4 whitespace-no-wrap text-sm leading-5 text-gray-500"
-              >
-                Director, Human Resources
-              </td>
-              <td
-                class="px-6 py-4 whitespace-no-wrap text-sm leading-5 text-gray-500"
-              >
-                bernardlane@example.com
-              </td>
-              <td
-                class="px-6 py-4 whitespace-no-wrap text-sm leading-5 text-gray-500"
-              >
-                Owner
-              </td>
-              <td
-                class="px-6 py-4 whitespace-no-wrap text-right text-sm leading-5 font-medium"
-              >
-                <a href="#" class="text-indigo-600 hover:text-indigo-900"
-                  >Edit</a
+    <!-- Seznam transakcij. -->
+
+    <div class="mt-10 flex flex-col">
+      <div class="-my-2 py-2 overflow-x-auto sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
+        <div
+          class="align-middle inline-block min-w-full shadow overflow-hidden sm:rounded-lg border-b border-gray-200"
+        >
+          <table class="min-w-full">
+            <thead>
+              <tr>
+                <th
+                  class="px-6 py-3 border-b border-gray-200 bg-gray-50 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider"
                 >
-              </td>
-            </tr>
-            <tr class="bg-gray-50">
-              <td
-                class="px-6 py-4 whitespace-no-wrap text-sm leading-5 font-medium text-gray-900"
-              >
-                Bernard Lane
-              </td>
-              <td
-                class="px-6 py-4 whitespace-no-wrap text-sm leading-5 text-gray-500"
-              >
-                Director, Human Resources
-              </td>
-              <td
-                class="px-6 py-4 whitespace-no-wrap text-sm leading-5 text-gray-500"
-              >
-                bernardlane@example.com
-              </td>
-              <td
-                class="px-6 py-4 whitespace-no-wrap text-sm leading-5 text-gray-500"
-              >
-                Owner
-              </td>
-              <td
-                class="px-6 py-4 whitespace-no-wrap text-right text-sm leading-5 font-medium"
-              >
-                <a href="#" class="text-indigo-600 hover:text-indigo-900"
-                  >Edit</a
+                  Opis
+                </th>
+                <th
+                  class="px-6 py-3 border-b border-gray-200 bg-gray-50 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider"
                 >
-              </td>
-            </tr>
-            <tr class="bg-white">
-              <td
-                class="px-6 py-4 whitespace-no-wrap text-sm leading-5 font-medium text-gray-900"
-              >
-                Bernard Lane
-              </td>
-              <td
-                class="px-6 py-4 whitespace-no-wrap text-sm leading-5 text-gray-500"
-              >
-                Director, Human Resources
-              </td>
-              <td
-                class="px-6 py-4 whitespace-no-wrap text-sm leading-5 text-gray-500"
-              >
-                bernardlane@example.com
-              </td>
-              <td
-                class="px-6 py-4 whitespace-no-wrap text-sm leading-5 text-gray-500"
-              >
-                Owner
-              </td>
-              <td
-                class="px-6 py-4 whitespace-no-wrap text-right text-sm leading-5 font-medium"
-              >
-                <a href="#" class="text-indigo-600 hover:text-indigo-900"
-                  >Edit</a
+                  Znesek
+                </th>
+                <th
+                  class="px-6 py-3 border-b border-gray-200 bg-gray-50 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider"
                 >
-              </td>
-            </tr>
-            <tr class="bg-gray-50">
-              <td
-                class="px-6 py-4 whitespace-no-wrap text-sm leading-5 font-medium text-gray-900"
-              >
-                Bernard Lane
-              </td>
-              <td
-                class="px-6 py-4 whitespace-no-wrap text-sm leading-5 text-gray-500"
-              >
-                Director, Human Resources
-              </td>
-              <td
-                class="px-6 py-4 whitespace-no-wrap text-sm leading-5 text-gray-500"
-              >
-                bernardlane@example.com
-              </td>
-              <td
-                class="px-6 py-4 whitespace-no-wrap text-sm leading-5 text-gray-500"
-              >
-                Owner
-              </td>
-              <td
-                class="px-6 py-4 whitespace-no-wrap text-right text-sm leading-5 font-medium"
-              >
-                <a href="#" class="text-indigo-600 hover:text-indigo-900"
-                  >Edit</a
+                  Kuverta
+                </th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <!-- Posamezna transakcija -->
+              <tr class="bg-white">
+                <td
+                  class="px-6 py-4 whitespace-no-wrap text-sm leading-5 font-medium text-gray-900"
                 >
-              </td>
-            </tr>
-            <tr class="bg-white">
-              <td
-                class="px-6 py-4 whitespace-no-wrap text-sm leading-5 font-medium text-gray-900"
-              >
-                Bernard Lane
-              </td>
-              <td
-                class="px-6 py-4 whitespace-no-wrap text-sm leading-5 text-gray-500"
-              >
-                Director, Human Resources
-              </td>
-              <td
-                class="px-6 py-4 whitespace-no-wrap text-sm leading-5 text-gray-500"
-              >
-                bernardlane@example.com
-              </td>
-              <td
-                class="px-6 py-4 whitespace-no-wrap text-sm leading-5 text-gray-500"
-              >
-                Owner
-              </td>
-              <td
-                class="px-6 py-4 whitespace-no-wrap text-right text-sm leading-5 font-medium"
-              >
-                <a href="#" class="text-indigo-600 hover:text-indigo-900"
-                  >Edit</a
+                  Bernard Lane
+                </td>
+                <td
+                  class="px-6 py-4 whitespace-no-wrap text-sm leading-5 text-gray-500"
                 >
-              </td>
-            </tr>
-          </tbody>
-        </table>
+                  Director, Human Resources
+                </td>
+                <td
+                  class="px-6 py-4 whitespace-no-wrap text-sm leading-5 text-gray-500"
+                >
+                  bernardlane@example.com
+                </td>
+              </tr>
+
+              <!--  -->
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
+
+    <!--  -->
   </div>
 </div>

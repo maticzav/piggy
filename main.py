@@ -5,7 +5,7 @@ import random
 import appdirs
 import bottle
 
-from model import Racun, Uporabnik
+from model import Racun, Uporabnik, Kuverta
 
 # Config ---------------------------------------------------------------------
 
@@ -62,6 +62,8 @@ def files(path):
 
 # Spletni vmesnik ------------------------------------------------------------
 
+# TODO: Back button!!!
+
 
 @bottle.get("/")
 @bottle.view("index.html")
@@ -77,7 +79,7 @@ def domov(gledalec: 'Uporabnik'):
 @bottle.view("ustvari_racun.html")
 @auth
 def ustvari_racun(gledalec: 'Uporabnik'):
-    return {}
+    return
 
 
 @bottle.get("/racun/<ime>")
@@ -89,7 +91,48 @@ def racun(ime: str, gledalec: 'Uporabnik'):
     if racun is None:
         return bottle.HTTPError(404)
 
-    return {"racun": racun}
+    return {
+        "racun": racun,
+        "kuverte": racun.kuverte
+    }
+
+
+@bottle.get("/racun/<ime>/ustvari_kuverto")
+@bottle.view("ustvari_kuverto.html")
+@auth
+def ustvari_kuverto(ime: str, gledalec: 'Uporabnik'):
+    racun = gledalec.racuni.get(ime)
+
+    if racun is None:
+        return bottle.HTTPError(404)
+
+    return {
+        "racun": racun,
+        "kuverte": racun.kuverte,
+        "barve": Kuverta.razpolozljive_barve,
+        "ikone": Kuverta.razpolozljive_ikone
+    }
+
+
+@bottle.get("/racun/<ime_racuna>/kuverta/<ime_kuverte>")
+@bottle.view("kuverta.html")
+@auth
+def ustvari_kuverto(ime_racuna: str, ime_kuverte: str, gledalec: 'Uporabnik'):
+    racun = gledalec.racuni.get(ime_racuna)
+
+    if racun is None:
+        return bottle.HTTPError(404)
+
+    kuverta = racun.kuverta.get(ime_kuverte)
+
+    if kuverta is None:
+        return bottle.HTTPError(404)
+
+    return {
+        "racun": racun,
+        "kuverta": kuverta,
+    }
+
 
 # Errors
 
@@ -108,6 +151,26 @@ def ustvari_racun(gledalec: 'Uporabnik'):
     davek = int(bottle.request.forms.getunicode("davek"))
 
     racun = gledalec.ustvari_racun(ime, davek / 100)
+    gledalec.shrani()
+
+    bottle.redirect(f"/racun/{racun.ime}")
+
+
+@bottle.post('/api/racun/<ime_racuna>/kuverta')
+@auth
+def ustvari_kuverto(ime_racuna: str, gledalec: 'Uporabnik'):
+    ime = bottle.request.forms.getunicode("ime")
+    barva = bottle.request.forms.getunicode("barva")
+    ikona = bottle.request.forms.getunicode("ikona")
+
+    print(ime, barva, ikona)
+
+    racun = gledalec.racuni.get(ime_racuna)
+
+    if racun is None:
+        return bottle.HTTPError(404)
+
+    racun.ustvari_kuverto(ime, barva, ikona)
     gledalec.shrani()
 
     bottle.redirect(f"/racun/{racun.ime}")
