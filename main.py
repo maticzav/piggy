@@ -4,6 +4,7 @@ import random
 
 import appdirs
 import bottle
+import pendulum
 
 from model import Racun, Uporabnik, Kuverta
 
@@ -93,7 +94,8 @@ def racun(ime: str, gledalec: 'Uporabnik'):
 
     return {
         "racun": racun,
-        "kuverte": racun.kuverte
+        "kuverte": racun.kuverte,
+        "transakcije": racun.transakcije
     }
 
 
@@ -134,6 +136,19 @@ def ustvari_kuverto(ime_racuna: str, ime_kuverte: str, gledalec: 'Uporabnik'):
     }
 
 
+@bottle.get("/racun/<ime_racuna>/ustvari_transakcijo")
+@bottle.view("ustvari_transakcijo.html")
+@auth
+def ustvari_transakcijo(ime_racuna: str, gledalec: 'Uporabnik'):
+    racun = gledalec.racuni.get(ime_racuna)
+    if racun is None:
+        return bottle.HTTPError(404)
+
+    return {
+        "racun": racun,
+    }
+
+
 # Errors
 
 
@@ -171,6 +186,24 @@ def ustvari_kuverto(ime_racuna: str, gledalec: 'Uporabnik'):
         return bottle.HTTPError(404)
 
     racun.ustvari_kuverto(ime, barva, ikona)
+    gledalec.shrani()
+
+    bottle.redirect(f"/racun/{racun.ime}")
+
+
+@bottle.post("/api/racun/<ime_racuna>/transakcija")
+@auth
+def ustvari_transakcijo(ime_racuna: str, gledalec: 'Uporabnik'):
+    opis = bottle.request.forms.getunicode("opis")
+    znesek = int(bottle.request.forms.getunicode("znesek")) * 100
+    datum = pendulum.now()
+
+    racun = gledalec.racuni.get(ime_racuna)
+
+    if racun is None:
+        return bottle.HTTPError(404)
+
+    racun.ustvari_prihodek(opis, znesek, datum, {})
     gledalec.shrani()
 
     bottle.redirect(f"/racun/{racun.ime}")

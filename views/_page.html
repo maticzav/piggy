@@ -1,5 +1,28 @@
 % rebase("_base.html", title=None)
 
+<!-- Banner -->
+
+<div id="compatibility-banner" class="relative bg-pink-400">
+  <div class="max-w-screen-xl mx-auto py-3 px-3 sm:px-6 lg:px-8">
+    <div class="pr-16 sm:text-center sm:px-16">
+      <p class="font-medium text-white">
+        Raje uporabite Chrome kot tole staro kišto.
+      </p>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bowser@2.9.0/es5.js"></script>
+<script>
+  var result = bowser.getParser(navigator.userAgent).getResult()
+
+  /* Hide banner on advanced browsers. */
+  if (['Safari', 'Internet Explorer'].indexOf(result.browser.name) == -1) {
+    var bannerElement = document.getElementById('compatibility-banner')
+    bannerElement.classList.add('hidden')
+  }
+</script>
+
 <!-- Header -->
 
 <div class="relative bg-white">
@@ -49,6 +72,18 @@
       >
         Vsi računi
       </a>
+
+      <!-- Gumb nazaj -->
+      % if racun is not None:
+      <a
+        href="/racun/{{racun.ime}}"
+        class="text-base leading-6 font-medium text-gray-500 hover:text-gray-900 focus:outline-none focus:text-gray-900 transition ease-in-out duration-150"
+      >
+        {{racun.ime}}
+      </a>
+      % end
+
+      <!--  -->
     </nav>
 
     <!-- Auth -->
@@ -139,6 +174,35 @@
                   <div class="text-base leading-6 font-medium text-gray-900">
                     Vsi računi
                   </div>
+                </a>
+
+                <!-- Gumb nazaj -->
+                % if racun:
+                <a
+                  href="/racun/{{racun.ime}}"
+                  class="-m-3 p-3 flex items-center space-x-4 rounded-lg hover:bg-gray-50 transition ease-in-out duration-150"
+                >
+                  <div
+                    class="flex-shrink-0 flex items-center justify-center h-10 w-10 rounded-md bg-pink-500 text-white"
+                  >
+                    <svg
+                      class="h-6 w-6"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                      />
+                    </svg>
+                  </div>
+                  <div class="text-base leading-6 font-medium text-gray-900">
+                    {{racun.ime}}
+                  </div>
+                  % end
                 </a>
                 <!--  -->
               </nav>

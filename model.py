@@ -177,6 +177,11 @@ class Racun:
         return self._kuverte
 
     @property
+    def vse_transakcije(self) -> List['Transakcija']:
+        """Vrne vse transakcije, ki so se dogodile do danes."""
+        return self.transakcije
+
+    @property
     def stanje(self):
         """Ustvari predstavitev racuna in vseh pomembnih podrazredov s slovarjem."""
         return {
@@ -246,13 +251,14 @@ class Racun:
         self._kuverte[kuverta.ime] = kuverta
         return kuverta
 
-    def ustvari_odhodek(self, opis: str, znesek: int, datum: pendulum.DateTime = pendulum.now()) -> 'Odhodek':
-        """Ustvari enkraten odhodek na računu."""
+    def ustvari_odhodek(self, opis: str, znesek: int, datum: pendulum.DateTime = pendulum.now(), kuverta: 'Kuverta' = None) -> 'Odhodek':
+        """Ustvari enkraten odhodek na računu ali v kuverti."""
         trans = Odhodek(
             opis=opis,
             znesek=znesek,
             datum=datum,
-            racun=self
+            racun=self,
+            kuverta=kuverta
         )
         self.transakcije.append(trans)
         return trans
@@ -265,18 +271,6 @@ class Racun:
             racun=self,
             je_investicija=True,
             datum=datum
-        )
-        self.transakcije.append(trans)
-        return trans
-
-    def ustvari_odhodek_iz_kuverte(self, opis: str, znesek: int, kuverta: 'Kuverta', datum: pendulum.DateTime = pendulum.now()) -> 'Odhodek':
-        """Ustvari nov odhodek v določeni kuverti."""
-        trans = Odhodek(
-            opis=opis,
-            znesek=znesek,
-            racun=self,
-            datum=datum,
-            kuverta=kuverta
         )
         self.transakcije.append(trans)
         return trans
@@ -336,7 +330,7 @@ class Racun:
             # Odhodek
             if j_trans["kind"] == "Odhodek":
                 if j_trans.get("kuverta"):
-                    racun.ustvari_odhodek_iz_kuverte(
+                    racun.ustvari_odhodek(
                         opis=j_trans["opis"],
                         znesek=j_trans["znesek"],
                         datum=pendulum.parse(j_trans["datum"]),
