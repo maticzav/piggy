@@ -2,6 +2,10 @@
 
 Budget planner za miljonarje.
 
+## Uporaba
+
+Za ustvarjanje računa vpišeš email in geslo. Če email še ni bil uporabljen, se bo ustvaril nov račun, drugače pa lahko vanj vstopiš z geslom, ki si ga nastavil.
+
 ## Zagon
 
 Za zagon Piggy-ja je potrebno s spleta namestiti vse pomožne knjižnice. To lahko naredite z ukazom
