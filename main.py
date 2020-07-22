@@ -146,6 +146,7 @@ def ustvari_transakcijo(ime_racuna: str, gledalec: 'Uporabnik'):
 
     return {
         "racun": racun,
+        "kuverte": racun.kuverte
     }
 
 
@@ -204,19 +205,39 @@ def ustvari_transakcijo(ime_racuna: str, vrsta_transakcije: 'VrstaTransakcije', 
     if vrsta_transakcije == "investicija":
         racun.ustvari_investicijo(opis, znesek, datum)
     elif vrsta_transakcije == "prihodek":
+        mesecni_prihodek = bool(
+            bottle.request.forms.getunicode("mesecni_prihodek"))
         # Najdi kuverte
         razpored_po_kuvertah = {}
         for kljuc in bottle.request.forms.keys():
-            if kljuc.startswith("kuverta"):
-                ime_kuverte = kljuc.replace("kuverta", "")
+            print(kljuc)
+            if kljuc.startswith("kuverta_"):
+                ime_kuverte = kljuc.replace("kuverta_", "")
                 kuverta = racun.kuverta.get(ime_kuverte)
-
+                print(kuverta)
                 if kuverta is None:
                     return bottle.HTTPError(400)
-                razpored_po_kuvertah[kuverta] = int(
-                    bottle.request.forms.getunicode(kljuc))
+
+                namenjeno = bottle.request.forms.getunicode(kljuc)
+                if namenjeno != "":
+                    razpored_po_kuvertah[kuverta] = int(namenjeno) * 100
+
+        print(razpored_po_kuvertah)
         # Ustvari prihodek
-        racun.ustvari_prihodek(opis, znesek, datum, razpored_po_kuvertah)
+        if mesecni_prihodek:
+            racun.ustvari_mesecni_prihodek(
+                opis=opis,
+                znesek=znesek,
+                datum=datum,
+                razpored_po_kuvertah=razpored_po_kuvertah
+            )
+        else:
+            racun.ustvari_prihodek(
+                opis=opis,
+                znesek=znesek,
+                datum=datum,
+                razpored_po_kuvertah=razpored_po_kuvertah
+            )
     elif vrsta_transakcije == "odhodek":
         ime_kuverte = bottle.request.forms.getunicode("kuverta")
         # Najdi kuverto

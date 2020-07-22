@@ -131,10 +131,42 @@
               </div>
             </div>
 
-            <!-- Razpored po kuvertah -->
-            <!-- TODO: -->
+            <!-- Mesecni prihodek -->
+            <div class="col-span-6">
+              <label class="flex items-center">
+                <input
+                  type="checkbox"
+                  name="mesecni_prihodek"
+                  class="form-checkbox"
+                />
+                <span class="ml-2 text-sm font-medium leading-5 text-gray-700"
+                  >Mesečni prihodek</span
+                >
+              </label>
+            </div>
 
-            <div></div>
+            <!-- Razpored po kuvertah -->
+
+            <div class="col-span-6">
+              <label class="text-sm font-medium leading-5 text-gray-700"
+                >Razpored po kuvertah</label
+              >
+              % for kuverta in kuverte:
+              <div class="my-2 flex rounded-md shadow-sm">
+                <span
+                  class="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500 sm:text-sm"
+                >
+                  {{kuverta.ime.capitalize()}}
+                </span>
+                <input
+                  type="number"
+                  name="kuverta_{{kuverta.ime}}"
+                  class="form-input flex-1 block w-full px-3 py-2 rounded-none rounded-r-md sm:text-sm sm:leading-5"
+                  placeholder="10€"
+                />
+              </div>
+              % end
+            </div>
           </div>
         </div>
 

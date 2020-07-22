@@ -607,6 +607,11 @@ class Prihodek(Transakcija):
         """Pove koliko denarja v transakciji je bilo namenjenega v dano kuverto."""
         return self.razpored_po_kuvertah.get(kuverta, 0)
 
+    @property
+    def je_mesecni(self) -> bool:
+        """Pove ali je prihodek mesečni prihodek."""
+        return isinstance(self, MesecniPrihodek)
+
 
 class MesecniPrihodek(Prihodek):
     """
