@@ -63,8 +63,6 @@ def files(path):
 
 # Spletni vmesnik ------------------------------------------------------------
 
-# TODO: Back button!!!
-
 
 @bottle.get("/")
 @bottle.view("index.html")
@@ -195,7 +193,12 @@ def ustvari_kuverto(ime_racuna: str, gledalec: 'Uporabnik'):
 def ustvari_transakcijo(ime_racuna: str, vrsta_transakcije: 'VrstaTransakcije', gledalec: 'Uporabnik'):
     opis = bottle.request.forms.getunicode("opis")
     znesek = int(bottle.request.forms.getunicode("znesek")) * 100
-    datum = pendulum.now()
+
+    # Try parsing the date.
+    try:
+        datum = pendulum.parse(bottle.request.forms.getunicode("datum"))
+    except:
+        datum = pendulum.now()
 
     racun = gledalec.racuni.get(ime_racuna)
 

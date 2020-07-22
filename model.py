@@ -103,7 +103,7 @@ class Racun:
 
         self.ime: str = ime
         self.davek: float = davek
-        self.transakcije: List['Transakcija'] = list()
+        self._transakcije: List['Transakcija'] = list()
         self._kuverte: Dict[str, 'Kuverta'] = dict()
         self.arhiviran: bool = False
 
@@ -112,18 +112,40 @@ class Racun:
     @property
     def prihodki(self) -> List['Prihodek']:
         """Vrne vse prihodki med transakcijami."""
-        return [trans for trans in self.transakcije if trans.je_prihodek]
+        return [trans for trans in self._transakcije if trans.je_prihodek]
 
     @property
     def odhodki(self) -> List['Odhodek']:
         """Vrne vse odhodke med transakcijami."""
-        return [trans for trans in self.transakcije if trans.je_odhodek]
+        return [trans for trans in self._transakcije if trans.je_odhodek]
+
+    @property
+    def transakcije(self) -> List['Transakcija']:
+        """Vrne vse transakcije, tudi mesečne "podvojene"."""
+        danes = pendulum.now()
+        transakcije: List['Transakcija'] = []
+
+        for transakcija in self._transakcije:
+            if transakcija.kind == "MesecniPrihodek":
+                for mesec in range(0, transakcija.odprt_mescev):
+                    transakcije.append(Transakcija(
+                        opis=transakcija.opis,
+                        znesek=transakcija.znesek,
+                        racun=self,
+                        datum=transakcija.datum.add(months=mesec)
+                    ))
+            else:
+                transakcije.append(transakcija)
+
+        transakcije.sort(key=lambda trans: -trans.datum.float_timestamp)
+
+        return transakcije
 
     @property
     def porabljeno_od_investicij(self) -> int:
         """Vsota, ki smo jo namenili za investicije."""
         vsota: int = 0
-        for transakcija in self.transakcije:
+        for transakcija in self._transakcije:
             if transakcija.je_odhodek and transakcija.je_investicija:
                 vsota -= transakcija.znesek
         return vsota
@@ -132,7 +154,7 @@ class Racun:
     def namenjeno_za_investiranje(self) -> int:
         """Ves denar, ki smo ga našparali z davkom."""
         vsota: int = 0
-        for transakcija in self.transakcije:
+        for transakcija in self._transakcije:
             if transakcija.je_prihodek:
                 vsota += transakcija.investicija
         return vsota
@@ -151,7 +173,7 @@ class Racun:
     def nerazporejeno_porabljeno(self) -> int:
         """Nerazporejen denar, ki smo ga že porabili."""
         vsota: int = 0
-        for transakcija in self.transakcije:
+        for transakcija in self._transakcije:
             if transakcija.je_odhodek and transakcija.je_nerazporejen:
                 vsota -= transakcija.znesek
         return vsota
@@ -175,11 +197,6 @@ class Racun:
     def kuverta(self) -> Dict[str, 'Kuverta']:
         """Vrne slovar kuvert po imenih."""
         return self._kuverte
-
-    @property
-    def vse_transakcije(self) -> List['Transakcija']:
-        """Vrne vse transakcije, ki so se dogodile do danes."""
-        return self.transakcije
 
     @property
     def stanje(self):
@@ -211,7 +228,7 @@ class Racun:
             } for (kuverta, znesek) in transakcija.razpored_po_kuvertah.items()] if isinstance(transakcija, Prihodek) else None,
             # Predstavitev ponavljajočega prihodka.
             'konec': transakcija.konec.to_iso8601_string() if isinstance(transakcija, MesecniPrihodek) else None
-        } for transakcija in self.transakcije]
+        } for transakcija in self._transakcije]
 
     @property
     def stanje_kuvert(self):
@@ -236,7 +253,7 @@ class Racun:
             datum=datum,
             razpored_po_kuvertah=razpored_po_kuvertah
         )
-        self.transakcije.append(trans)
+        self._transakcije.append(trans)
         return trans
 
     def ustvari_prihodek(self, opis: str, znesek: int, datum: pendulum.DateTime = pendulum.now(), razpored_po_kuvertah: Dict['Kuverta', int] = {}) -> 'Prihodek':
@@ -248,7 +265,7 @@ class Racun:
             datum=datum,
             razpored_po_kuvertah=razpored_po_kuvertah
         )
-        self.transakcije.append(trans)
+        self._transakcije.append(trans)
         return trans
 
     def ustvari_mesecni_odhodek(self, opis: str, znesek: int) -> 'MesecniOdhodek':
@@ -270,7 +287,7 @@ class Racun:
             racun=self,
             kuverta=kuverta
         )
-        self.transakcije.append(trans)
+        self._transakcije.append(trans)
         return trans
 
     def ustvari_investicijo(self, opis: str, znesek: int, datum: pendulum.DateTime = pendulum.now()) -> 'Odhodek':
@@ -282,7 +299,7 @@ class Racun:
             je_investicija=True,
             datum=datum
         )
-        self.transakcije.append(trans)
+        self._transakcije.append(trans)
         return trans
 
     def ustvari_kuverto(self, ime: str, barva: str = "modra", ikona: str = "kuverta") -> 'Kuverta':
@@ -437,7 +454,7 @@ class Kuverta:
     def namenjeno(self) -> int:
         """Pove koliko denarja je bilo namenjenega za kuverto."""
         vsota: int = 0
-        for trans in self.racun.transakcije:
+        for trans in self.racun._transakcije:
             if trans.je_prihodek:
                 vsota += trans.namenjeno_v_kuverto(self)
         return vsota
