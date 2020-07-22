@@ -12,6 +12,7 @@
     "autoprefixer": "^9.8.5",
     "postcss": "^7.0.32",
     "postcss-cli": "^7.1.1",
+    "prettier": "^2.0.5",
     "tailwindcss": "^1.4.6"
   },
   "license": "MIT"
