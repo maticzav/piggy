@@ -187,33 +187,43 @@ class Racun:
         return {
             'ime': self.ime,
             'davek': self.davek,
-            # Kuverte so lahko ali navadne kuverte ali mesečni odhodki.
-            'kuverte': [{
-                'kind': type(kuverta).__name__,
-                'hash': hash(kuverta),
-                'ime': kuverta.ime,
-                'barva': kuverta.barva,
-                'ikona': kuverta.ikona,
-                'znesek': kuverta.znesek if isinstance(kuverta, MesecniOdhodek) else None
-            } for kuverta in self.kuverte],
-            'transakcije': [{
-                'kind': type(transakcija).__name__,
-                'opis': transakcija.opis,
-                'znesek': abs(transakcija.znesek),
-                'datum': transakcija.datum.to_iso8601_string(),
-                # Predstavitev odhodka.
-                'kuverta': hash(transakcija.kuverta) if isinstance(transakcija, Odhodek) and transakcija.kuverta is not None else None,
-                'je_investicija': transakcija.je_investicija if isinstance(transakcija, Odhodek) else None,
-                # Predstavitev prihodka.
-                'razpored_po_kuvertah': [{
-                    'hash': hash(kuverta),
-                    'znesek': znesek
-                } for (kuverta, znesek) in transakcija.razpored_po_kuvertah.items()] if isinstance(transakcija, Prihodek) else None,
-                # Predstavitev ponavljajočega prihodka.
-                'konec': transakcija.konec.to_iso8601_string() if isinstance(transakcija, MesecniPrihodek) else None
-            } for transakcija in self.transakcije],
+            'kuverte': self.stanje_kuvert,
+            'transakcije': self.stanje_transakcij,
             'arhiviran': self.arhiviran
         }
+
+    @property
+    def stanje_transakcij(self):
+        """Vrne stanje transakcij v slovarni obliki."""
+        return [{
+            # Kuverte so lahko ali navadne kuverte ali mesečni odhodki.
+            'kind': transakcija.kind,
+            'opis': transakcija.opis,
+            'znesek': abs(transakcija.znesek),
+            'datum': transakcija.datum.to_iso8601_string(),
+            # Predstavitev odhodka.
+            'kuverta': hash(transakcija.kuverta) if isinstance(transakcija, Odhodek) and transakcija.kuverta is not None else None,
+            'je_investicija': transakcija.je_investicija if isinstance(transakcija, Odhodek) else None,
+            # Predstavitev prihodka.
+            'razpored_po_kuvertah': [{
+                'hash': hash(kuverta),
+                'znesek': znesek
+            } for (kuverta, znesek) in transakcija.razpored_po_kuvertah.items()] if isinstance(transakcija, Prihodek) else None,
+            # Predstavitev ponavljajočega prihodka.
+            'konec': transakcija.konec.to_iso8601_string() if isinstance(transakcija, MesecniPrihodek) else None
+        } for transakcija in self.transakcije]
+
+    @property
+    def stanje_kuvert(self):
+        """Vrne stanje kuvert na računu v slovarni obliki."""
+        return [{
+            'kind': type(kuverta).__name__,
+            'hash': hash(kuverta),
+            'ime': kuverta.ime,
+            'barva': kuverta.barva,
+            'ikona': kuverta.ikona,
+            'znesek': kuverta.znesek if isinstance(kuverta, MesecniOdhodek) else None
+        } for kuverta in self.kuverte]
 
     # Namere -----------------------------------------------------------------
 
@@ -415,6 +425,12 @@ class Kuverta:
     def __hash__(self) -> int:
         return hash(self.ime)
 
+    def __str__(self):
+        return f"{self.barva.capitalize()} kuverta z ikono {self.ikona}"
+
+    def __repr__(self):
+        return f"Kuverta({self.ime}, barva={self.barva}, ikona={self.ikona})"
+
     # Izračunane vrednosti ---------------------------------------------------
 
     @property
@@ -501,6 +517,11 @@ class Transakcija:
     def je_odhodek(self):
         """Pove ali je transakcija odhodek."""
         return self.znesek < 0
+
+    @property
+    def kind(self):
+        """Vrne vrsto transakcije."""
+        return type(self).__name__
 
     # """Vrne vrednost transakcije."""
     # @property

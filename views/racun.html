@@ -127,8 +127,17 @@
           >
             {{kuverta.ime}}
           </a>
-          <p class="text-sm leading-5 text-gray-500">
-            {{kuverta.razpolozljivo}}€
+          <!-- prettier-ignore -->
+          <%
+            razpolozljivo = kuverta.razpolozljivo / 100
+            if razpolozljivo < 0:
+              barva_besedila =  "text-red-400"
+            else:
+              barva_besedila = "text-gray-500"
+            end
+          %>
+          <p class="text-sm leading-5 {{barva_besedila}}">
+            {{razpolozljivo}}€
           </p>
         </div>
       </li>
@@ -156,6 +165,11 @@
             <thead>
               <tr>
                 <th
+                  class="pl-6 pr-2 py-3 border-b border-gray-200 bg-gray-50 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Datum
+                </th>
+                <th
                   class="px-6 py-3 border-b border-gray-200 bg-gray-50 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider"
                 >
                   Opis
@@ -168,6 +182,11 @@
                 <th
                   class="px-6 py-3 border-b border-gray-200 bg-gray-50 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider"
                 >
+                  Vrsta
+                </th>
+                <th
+                  class="px-6 py-3 border-b border-gray-200 bg-gray-50 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider"
+                >
                   Kuverta
                 </th>
               </tr>
@@ -175,23 +194,63 @@
 
             <tbody>
               <!-- Posamezna transakcija -->
+
+              % for transakcija in transakcije:
               <tr class="bg-white">
+                <td
+                  class="pl-6 pr-2 py-4 whitespace-no-wrap text-sm leading-5 font-medium text-gray-500"
+                >
+                  {{transakcija.datum.format('D.M.Y H:m')}}
+                </td>
                 <td
                   class="px-6 py-4 whitespace-no-wrap text-sm leading-5 font-medium text-gray-900"
                 >
-                  Bernard Lane
+                  {{transakcija.opis}}
                 </td>
                 <td
                   class="px-6 py-4 whitespace-no-wrap text-sm leading-5 text-gray-500"
                 >
-                  Director, Human Resources
+                  {{abs(transakcija.znesek)/100}}€
                 </td>
                 <td
                   class="px-6 py-4 whitespace-no-wrap text-sm leading-5 text-gray-500"
                 >
-                  bernardlane@example.com
+                  <!-- prettier-ignore -->
+                  % if transakcija.kind == "Prihodek":
+                  % include("components/_small_badge.html", label="Prihodek", color="green")
+                  <!-- prettier-ignore -->
+                  % elif transakcija.kind == "Odhodek":
+                  % include("components/_small_badge.html", label="Odhodek", color="yellow")
+                  % end
+                </td>
+                <td
+                  class="px-6 py-4 whitespace-no-wrap text-sm leading-5 text-gray-500"
+                >
+                  <!-- prettier-ignore -->
+                  <%
+                  # Tailwind color
+                  def tw_badge_color(barva):
+                    if barva == "rdeca":
+                      return "red"
+                    elif barva == "modra":
+                      return "blue"
+                    elif barva == "zelena":
+                      return "green"
+                    elif barva == "rumena":
+                      return "yellow"
+                    elif barva == "siva":
+                      return "gray"
+                    end
+                  end
+                  %>
+
+                  <!-- prettier-ignore -->
+                  % if transakcija.kind == "Odhodek" and transakcija.kuverta is not None:
+                  % include("components/_badge.html", label=transakcija.kuverta.ime, color=tw_badge_color(transakcija.kuverta.barva))
+                  % end
                 </td>
               </tr>
+              % end
 
               <!--  -->
             </tbody>

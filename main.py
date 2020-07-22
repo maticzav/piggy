@@ -1,12 +1,13 @@
 import hashlib
 import os
 import random
+from typing import Literal
 
 import appdirs
 import bottle
 import pendulum
 
-from model import Racun, Uporabnik, Kuverta
+from model import Kuverta, Racun, Uporabnik
 
 # Config ---------------------------------------------------------------------
 
@@ -70,7 +71,6 @@ def files(path):
 @bottle.view("index.html")
 @auth
 def domov(gledalec: 'Uporabnik'):
-    print(gledalec.racuni.values())
     return {
         "racuni": gledalec.racuni.values()
     }
@@ -178,8 +178,6 @@ def ustvari_kuverto(ime_racuna: str, gledalec: 'Uporabnik'):
     barva = bottle.request.forms.getunicode("barva")
     ikona = bottle.request.forms.getunicode("ikona")
 
-    print(ime, barva, ikona)
-
     racun = gledalec.racuni.get(ime_racuna)
 
     if racun is None:
@@ -191,19 +189,35 @@ def ustvari_kuverto(ime_racuna: str, gledalec: 'Uporabnik'):
     bottle.redirect(f"/racun/{racun.ime}")
 
 
-@bottle.post("/api/racun/<ime_racuna>/transakcija")
+VrstaTransakcije = Literal["investicija", "prihodek", "odhodek"]
+
+
+@bottle.post("/api/racun/<ime_racuna>/transakcija/<vrsta_transakcije:re:(investicija)|(prihodek)|(odhodek)>")
 @auth
-def ustvari_transakcijo(ime_racuna: str, gledalec: 'Uporabnik'):
+def ustvari_transakcijo(ime_racuna: str, vrsta_transakcije: 'VrstaTransakcije', gledalec: 'Uporabnik'):
     opis = bottle.request.forms.getunicode("opis")
     znesek = int(bottle.request.forms.getunicode("znesek")) * 100
     datum = pendulum.now()
+    ime_kuverte = bottle.request.forms.getunicode("kuverta")
 
     racun = gledalec.racuni.get(ime_racuna)
 
     if racun is None:
         return bottle.HTTPError(404)
 
-    racun.ustvari_prihodek(opis, znesek, datum, {})
+    if vrsta_transakcije == "investicija":
+        racun.ustvari_investicijo(opis, znesek, datum)
+    elif vrsta_transakcije == "prihodek":
+        racun.ustvari_prihodek(opis, znesek, datum, {})
+    elif vrsta_transakcije == "odhodek":
+        # Najdi kuverto
+        if ime_kuverte == "None":
+            kuverta = None
+        else:
+            kuverta = racun.kuverta.get(ime_kuverte, None)
+        # Ustvari odhodek
+        racun.ustvari_odhodek(opis, znesek, datum, kuverta)
+
     gledalec.shrani()
 
     bottle.redirect(f"/racun/{racun.ime}")
