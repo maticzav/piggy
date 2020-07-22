@@ -9,18 +9,125 @@
 
   <!-- Overview -->
 
-  <div class=""></div>
+  <div class="my-10 px-10">
+    <!-- Vloženo -->
+    <div class="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-3">
+      <!--  -->
+      <div class="bg-white overflow-hidden shadow rounded-lg hidden sm:block">
+        <div class="px-4 py-5 sm:p-6">
+          <dl>
+            <dt class="text-sm leading-5 font-medium text-gray-500 truncate">
+              Vloženo
+            </dt>
+            <dd class="mt-1 text-3xl leading-9 font-light text-gray-900">
+              <!-- prettier-ignore -->
+              % include("components/_value.html", value=kuverta.namenjeno/100)
+            </dd>
+          </dl>
+        </div>
+      </div>
+      <!--  -->
+
+      <div class="bg-white overflow-hidden shadow rounded-lg">
+        <div class="px-4 py-5 sm:p-6">
+          <dl>
+            <dt class="text-sm leading-5 font-medium text-gray-500 truncate">
+              Razpoložljivo
+            </dt>
+            <dd class="mt-1 text-3xl leading-9 font-semibold text-gray-800">
+              <!-- prettier-ignore -->
+              % include("components/_value.html", value=kuverta.razpolozljivo/100)
+            </dd>
+          </dl>
+        </div>
+      </div>
+
+      <!--  -->
+      <div class="bg-white overflow-hidden shadow rounded-lg hidden sm:block">
+        <div class="px-4 py-5 sm:p-6">
+          <dl>
+            <dt class="text-sm leading-5 font-medium text-gray-500 truncate">
+              Porabljeno
+            </dt>
+            <dd class="mt-1 text-3xl leading-9 font-light text-gray-800">
+              <!-- prettier-ignore -->
+              % include("components/_value.html", value=kuverta.porabljeno/100)
+            </dd>
+          </dl>
+        </div>
+      </div>
+      <!--  -->
+    </div>
+  </div>
+
+  <!-- Prihodki -->
+  <div class="my-10">
+    <!-- Heading -->
+
+    <div class="flex items-center justify-between px-8 lg:px-10">
+      % include("components/_small_heading.html", heading="Prihodki")
+    </div>
+
+    <!-- Seznam prihodkov. -->
+
+    <div class="mt-10 flex flex-col">
+      <div class="-my-2 py-2 overflow-x-auto sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
+        % if len(kuverta.prihodki) == 0:
+        <!-- prettier-ignore -->
+        % include("components/_empty.html", message="Ta kuverta še nima prihodkov.")
+        % else:
+        <div
+          class="align-middle inline-block min-w-full shadow overflow-hidden rounded-lg border-b border-gray-200"
+        >
+          <table class="min-w-full">
+            <thead>
+              <tr>
+                <th
+                  class="px-6 py-3 border-b border-gray-200 bg-gray-50 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Opis
+                </th>
+                <th
+                  class="px-6 py-3 border-b border-gray-200 bg-gray-50 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Znesek
+                </th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <!-- Posamezna transakcija -->
+
+              % for prihodek in kuverta.prihodki:
+              <tr class="bg-white">
+                <td
+                  class="px-6 py-4 whitespace-no-wrap text-sm leading-5 font-medium text-gray-900"
+                >
+                  {{prihodek.opis}}
+                </td>
+                <td
+                  class="px-6 py-4 whitespace-no-wrap text-sm leading-5 text-gray-500"
+                >
+                  {{abs(prihodek.namenjeno_v_kuverto(kuverta))/100}}€
+                </td>
+              </tr>
+              % end
+
+              <!--  -->
+            </tbody>
+          </table>
+        </div>
+        % end
+      </div>
+    </div>
+
+    <!--  -->
+  </div>
 
   <!-- Transakcije -->
   <div class="my-10">
-    <div
-      class="flex items-center justify-between flex-wrap sm:flex-no-wrap px-8 lg:px-10"
-    >
-      <div class="mt-2">
-        <h3 class="text-lg leading-6 font-medium text-gray-900">
-          Transakcije
-        </h3>
-      </div>
+    <div class="flex items-center justify-between flex-no-wrap px-8 lg:px-10">
+      % include("components/_small_heading.html", heading="Transakcije")
 
       <!-- prettier-ignore -->
       % include("components/_add.html", href=f"/racun/{racun.ime}/ustvari_transakcijo", label="Dodaj transakcijo")
@@ -37,6 +144,11 @@
             <thead>
               <tr>
                 <th
+                  class="pl-6 pr-2 py-3 border-b border-gray-200 bg-gray-50 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Datum
+                </th>
+                <th
                   class="px-6 py-3 border-b border-gray-200 bg-gray-50 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider"
                 >
                   Opis
@@ -49,30 +161,44 @@
                 <th
                   class="px-6 py-3 border-b border-gray-200 bg-gray-50 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider"
                 >
-                  Kuverta
+                  Vrsta
                 </th>
               </tr>
             </thead>
 
             <tbody>
               <!-- Posamezna transakcija -->
+
+              % for transakcija in transakcije:
               <tr class="bg-white">
+                <td
+                  class="pl-6 pr-2 py-4 whitespace-no-wrap text-sm leading-5 font-medium text-gray-500"
+                >
+                  {{transakcija.datum.format('D.M.Y H:m')}}
+                </td>
                 <td
                   class="px-6 py-4 whitespace-no-wrap text-sm leading-5 font-medium text-gray-900"
                 >
-                  Bernard Lane
+                  {{transakcija.opis}}
                 </td>
                 <td
                   class="px-6 py-4 whitespace-no-wrap text-sm leading-5 text-gray-500"
                 >
-                  Director, Human Resources
+                  {{abs(transakcija.znesek)/100}}€
                 </td>
                 <td
                   class="px-6 py-4 whitespace-no-wrap text-sm leading-5 text-gray-500"
                 >
-                  bernardlane@example.com
+                  <!-- prettier-ignore -->
+                  % if transakcija.kind == "Prihodek":
+                  % include("components/_small_badge.html", label="Prihodek", color="green")
+                  <!-- prettier-ignore -->
+                  % elif transakcija.kind == "Odhodek":
+                  % include("components/_small_badge.html", label="Odhodek", color="yellow")
+                  % end
                 </td>
               </tr>
+              % end
 
               <!--  -->
             </tbody>

@@ -420,7 +420,7 @@ class Kuverta:
         self.racun: 'Racun' = racun
 
     def __eq__(self, druga: 'Kuverta') -> bool:
-        return self.ime == druga.ime and self.racun == druga.racun
+        return self.ime == druga.ime
 
     def __hash__(self) -> int:
         return hash(self.ime)
@@ -446,8 +446,8 @@ class Kuverta:
     def porabljeno(self) -> int:
         """Vrne koliko denarja smo porabili iz kuverte."""
         vsota: int = 0
-        for trans in self.racun.transakcije:
-            if trans.je_odhodek and trans.je_kuverten and trans.kuverta == self:
+        for trans in self.transakcije:
+            if trans.je_odhodek:
                 vsota -= trans.znesek
         return vsota
 
@@ -460,6 +460,13 @@ class Kuverta:
     def prihodki(self) -> List['Prihodek']:
         """Vrne seznam vseh prihodkov, ki smo jih dali v to kuverto."""
         return [prihodek for prihodek in self.racun.prihodki if prihodek.namenjeno_v_kuverto(self) > 0]
+
+    @property
+    def transakcije(self) -> List['Transakcija']:
+        """Vrne seznam transakcij v tej kuverti."""
+        for transakcija in self.racun.transakcije:
+            if transakcija.kind == "Odhodek" and transakcija.je_kuverten and transakcija.kuverta == self:
+                yield transakcija
 
 
 class MesecniOdhodek(Kuverta):
@@ -494,6 +501,8 @@ class MesecniOdhodek(Kuverta):
 
 # ----------------------------------------------------------------------------
 
+VrstaTransakcije = Literal["investicija", "prihodek", "odhodek"]
+
 
 class Transakcija:
     """
@@ -519,7 +528,7 @@ class Transakcija:
         return self.znesek < 0
 
     @property
-    def kind(self):
+    def kind(self) -> 'VrstaTransakcije':
         """Vrne vrsto transakcije."""
         return type(self).__name__
 

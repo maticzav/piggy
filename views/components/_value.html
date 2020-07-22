@@ -1,0 +1,11 @@
+<!-- prettier-ignore -->
+<%
+if value < 0:
+    barva_besedila =  "text-red-400"
+else:
+    barva_besedila = "text-gray-500"
+end
+%>
+<span class="{{barva_besedila}}">
+  {{value}}€
+</span>

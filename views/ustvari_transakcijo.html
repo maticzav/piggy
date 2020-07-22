@@ -296,62 +296,62 @@
       action="/api/racun/{{racun.ime}}/transakcija/investicija"
       method="POST"
     >
-      <div class="shadow overflow-hidden sm:rounded-md">
-        <!--  -->
+      <div class="shadow overflow-hidden rounded-md mx-auto md:max-w-lg my-10">
         <div class="px-4 py-5 bg-white sm:p-6">
           <div class="grid grid-cols-6 gap-6">
-            <div class="col-span-6 sm:col-span-3">
-              <label
-                for="first_name"
-                class="block text-sm font-medium leading-5 text-gray-700"
-                >First name</label
-              >
-              <input
-                id="first_name"
-                class="mt-1 form-input block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:shadow-outline-blue focus:border-blue-300 transition duration-150 ease-in-out sm:text-sm sm:leading-5"
-              />
-            </div>
-
-            <div class="col-span-6 sm:col-span-3">
-              <label
-                for="last_name"
-                class="block text-sm font-medium leading-5 text-gray-700"
-                >Last name</label
-              >
-              <input
-                id="last_name"
-                class="mt-1 form-input block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:shadow-outline-blue focus:border-blue-300 transition duration-150 ease-in-out sm:text-sm sm:leading-5"
-              />
-            </div>
-
+            <!-- Form items -->
+            <!--  -->
             <div class="col-span-6 sm:col-span-4">
               <label
-                for="email_address"
+                for="description"
                 class="block text-sm font-medium leading-5 text-gray-700"
-                >Email address</label
+                >Opis</label
               >
               <input
-                id="email_address"
+                id="description"
+                name="opis"
+                required
+                placeholder="Žepnina"
                 class="mt-1 form-input block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:shadow-outline-blue focus:border-blue-300 transition duration-150 ease-in-out sm:text-sm sm:leading-5"
               />
             </div>
 
-            <div class="col-span-6 sm:col-span-3">
-              <label
-                for="country"
-                class="block text-sm font-medium leading-5 text-gray-700"
-                >Country / Region</label
-              >
-              <select
-                id="country"
-                class="mt-1 block form-select w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:shadow-outline-blue focus:border-blue-300 transition duration-150 ease-in-out sm:text-sm sm:leading-5"
-              >
-                <option>United States</option>
-                <option>Canada</option>
-                <option>Mexico</option>
-              </select>
-            </div>
+            <!--  -->
 
+            <div class="col-span-6 sm:col-span-2">
+              <label
+                for="amount"
+                class="block text-sm font-medium leading-5 text-gray-700"
+                >Znesek</label
+              >
+              <div class="mt-1 relative rounded-md shadow-sm">
+                <div
+                  class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"
+                >
+                  <svg
+                    class="h-5 w-5 text-gray-400"
+                    fill="none"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      d="M14.121 15.536c-1.171 1.952-3.07 1.952-4.242 0-1.172-1.953-1.172-5.119 0-7.072 1.171-1.952 3.07-1.952 4.242 0M8 10.5h4m-4 3h4m9-1.5a9 9 0 11-18 0 9 9 0 0118 0z"
+                    ></path>
+                  </svg>
+                </div>
+                <input
+                  id="amount"
+                  type="number"
+                  name="znesek"
+                  required
+                  class="form-input block w-full pl-10 sm:text-sm sm:leading-5"
+                  placeholder="10"
+                />
+              </div>
+            </div>
             <!--  -->
           </div>
         </div>

@@ -1,13 +1,12 @@
 import hashlib
 import os
 import random
-from typing import Literal
 
 import appdirs
 import bottle
 import pendulum
 
-from model import Kuverta, Racun, Uporabnik
+from model import Kuverta, Racun, Uporabnik, VrstaTransakcije
 
 # Config ---------------------------------------------------------------------
 
@@ -133,6 +132,7 @@ def ustvari_kuverto(ime_racuna: str, ime_kuverte: str, gledalec: 'Uporabnik'):
     return {
         "racun": racun,
         "kuverta": kuverta,
+        "transakcije": kuverta.transakcije
     }
 
 
@@ -189,16 +189,12 @@ def ustvari_kuverto(ime_racuna: str, gledalec: 'Uporabnik'):
     bottle.redirect(f"/racun/{racun.ime}")
 
 
-VrstaTransakcije = Literal["investicija", "prihodek", "odhodek"]
-
-
 @bottle.post("/api/racun/<ime_racuna>/transakcija/<vrsta_transakcije:re:(investicija)|(prihodek)|(odhodek)>")
 @auth
 def ustvari_transakcijo(ime_racuna: str, vrsta_transakcije: 'VrstaTransakcije', gledalec: 'Uporabnik'):
     opis = bottle.request.forms.getunicode("opis")
     znesek = int(bottle.request.forms.getunicode("znesek")) * 100
     datum = pendulum.now()
-    ime_kuverte = bottle.request.forms.getunicode("kuverta")
 
     racun = gledalec.racuni.get(ime_racuna)
 
@@ -208,8 +204,21 @@ def ustvari_transakcijo(ime_racuna: str, vrsta_transakcije: 'VrstaTransakcije', 
     if vrsta_transakcije == "investicija":
         racun.ustvari_investicijo(opis, znesek, datum)
     elif vrsta_transakcije == "prihodek":
-        racun.ustvari_prihodek(opis, znesek, datum, {})
+        # Najdi kuverte
+        razpored_po_kuvertah = {}
+        for kljuc in bottle.request.forms.keys():
+            if kljuc.startswith("kuverta"):
+                ime_kuverte = kljuc.replace("kuverta", "")
+                kuverta = racun.kuverta.get(ime_kuverte)
+
+                if kuverta is None:
+                    return bottle.HTTPError(400)
+                razpored_po_kuvertah[kuverta] = int(
+                    bottle.request.forms.getunicode(kljuc))
+        # Ustvari prihodek
+        racun.ustvari_prihodek(opis, znesek, datum, razpored_po_kuvertah)
     elif vrsta_transakcije == "odhodek":
+        ime_kuverte = bottle.request.forms.getunicode("kuverta")
         # Najdi kuverto
         if ime_kuverte == "None":
             kuverta = None
