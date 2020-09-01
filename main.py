@@ -2,30 +2,42 @@ import hashlib
 import os
 import random
 
-import appdirs
-import bottle
+from typing import Dict
+
+import appdirs  # type:ignore
+import bottle  # type:ignore
 import pendulum
 
-from model import Kuverta, Racun, Uporabnik, VrstaTransakcije
+from model.kuverta import Kuverta
+from model.racun import Racun
+from model.transakcija import VrstaTransakcije
+from model.uporabnik import Uporabnik
 
 # Config ---------------------------------------------------------------------
 
 ime_aplikacije = "Piggy"
 avtor_aplikacije = "maticzavadlal"
+# Verzije aplikacije pomagjo pri možnih spremembah oblike modela.
+# Verzije naj bodo urejene od zadnje proti prvi različici aplikacije.
 verzije_aplikacije = [
     "0.0.0"
 ]
+trenutna_verzija_aplikacije = verzije_aplikacije[0]
 
 skrivnost = os.getenv("SECRET", "skrivnost")
 data_dir = appdirs.user_data_dir(
-    ime_aplikacije, avtor_aplikacije, verzije_aplikacije[-1])
+    ime_aplikacije,
+    avtor_aplikacije,
+    trenutna_verzija_aplikacije
+)
+import_dir = os.path.join(os.getcwd(), "import")
 
 
 SESSION_COOKIE = "Authorization"
 
 # Seje -----------------------------------------------------------------------
 
-uporabniki = {}
+uporabniki: Dict[str, 'Uporabnik'] = {}
 
 # Wrappers and Extensions
 
@@ -34,7 +46,7 @@ class Uporabnik(Uporabnik):
 
     # Razširjeno -------------------------------------------------------------
 
-    def shrani(self):
+    def shrani(self) -> None:
         """Shrani stanje uporabnika."""
         self.izvozi_v_datoteko(os.path.join(data_dir, f"{self.email}.json"))
 
@@ -47,7 +59,9 @@ def auth(fn):
             SESSION_COOKIE, secret=skrivnost)
         vhodna_stran = bottle.request.path
 
-        if email is None:
+        if email is None or email not in uporabniki:
+            # Izbriši sejo
+            bottle.response.delete_cookie(SESSION_COOKIE, path='/')
             bottle.redirect(f"/prijava?redirect={vhodna_stran}")
         gledalec = uporabniki[email]
 
@@ -68,8 +82,11 @@ def files(path):
 @bottle.view("index.html")
 @auth
 def domov(gledalec: 'Uporabnik'):
+    error = bottle.request.query.getunicode("error", None)
+
     return {
-        "racuni": gledalec.racuni.values()
+        "racuni": gledalec.racuni.values(),
+        "error": error
     }
 
 
@@ -138,13 +155,17 @@ def ustvari_kuverto(ime_racuna: str, ime_kuverte: str, gledalec: 'Uporabnik'):
 @bottle.view("ustvari_transakcijo.html")
 @auth
 def ustvari_transakcijo(ime_racuna: str, gledalec: 'Uporabnik'):
+    error = bottle.request.query.getunicode("error", None)
     racun = gledalec.racuni.get(ime_racuna)
+
     if racun is None:
-        return bottle.HTTPError(404)
+        bottle.redirect("/")
+        return
 
     return {
         "racun": racun,
-        "kuverte": racun.kuverte
+        "kuverte": racun.kuverte,
+        "error": error
     }
 
 
@@ -161,13 +182,16 @@ def error404(error):
 @bottle.post('/api/racun')
 @auth
 def ustvari_racun(gledalec: 'Uporabnik'):
-    ime = bottle.request.forms.getunicode("ime")
-    davek = int(bottle.request.forms.getunicode("davek"))
+    try:
+        ime = bottle.request.forms.getunicode("ime")
+        davek = int(bottle.request.forms.getunicode("davek"))
 
-    racun = gledalec.ustvari_racun(ime, davek / 100)
-    gledalec.shrani()
+        racun = gledalec.ustvari_racun(ime, davek / 100)
+        gledalec.shrani()
 
-    bottle.redirect(f"/racun/{racun.ime}")
+        bottle.redirect(f"/racun/{racun.ime}")
+    except:
+        bottle.redirect(f"/?error=Nekaj je šlo narobe.")
 
 
 @bottle.post('/api/racun/<ime_racuna>/kuverta')
@@ -217,7 +241,7 @@ def ustvari_transakcijo(ime_racuna: str, vrsta_transakcije: 'VrstaTransakcije', 
             if kljuc.startswith("kuverta_"):
                 ime_kuverte = kljuc.replace("kuverta_", "")
                 kuverta = racun.kuverta.get(ime_kuverte)
-                print(kuverta)
+
                 if kuverta is None:
                     return bottle.HTTPError(400)
 
@@ -225,7 +249,15 @@ def ustvari_transakcijo(ime_racuna: str, vrsta_transakcije: 'VrstaTransakcije', 
                 if namenjeno != "":
                     razpored_po_kuvertah[kuverta] = int(namenjeno) * 100
 
-        print(razpored_po_kuvertah)
+        # Preveri računico
+        davek: float = racun.davek * znesek
+        razporjeno_v_kuverte: int = sum(razpored_po_kuvertah.values())
+
+        if znesek - davek - razporjeno_v_kuverte < 0:
+            bottle.redirect(
+                f"/racun/{ime_racuna}/ustvari_transakcijo?error=Napačen razpored.")
+            return
+
         # Ustvari prihodek
         if mesecni_prihodek:
             racun.ustvari_mesecni_prihodek(
@@ -261,8 +293,13 @@ def ustvari_transakcijo(ime_racuna: str, vrsta_transakcije: 'VrstaTransakcije', 
 @bottle.get("/prijava")
 @bottle.view("prijava.html")
 def prijava_get():
+    error = bottle.request.query.getunicode("error", None)
     redirect = bottle.request.query.getunicode("redirect", "/")
-    return {"redirect": redirect}
+
+    return {
+        "redirect": redirect,
+        "error": error
+    }
 
 
 @bottle.post("/prijava")
@@ -276,20 +313,25 @@ def prijava_post():
     h.update(geslo.encode(encoding='utf-8'))
     zasifrirano_geslo = h.hexdigest()
 
-    if email not in uporabniki:
-        uporabnik = Uporabnik(email, zasifrirano_geslo)
-        uporabniki[email] = uporabnik
-        uporabnik.shrani()
+    try:
+        if email not in uporabniki:
+            uporabnik = Uporabnik(email, zasifrirano_geslo)
+            uporabniki[email] = uporabnik
+            uporabnik.shrani()
+        else:
+            uporabnik = uporabniki[email]
+            uporabnik.preveri_geslo(zasifrirano_geslo)
+
+        # Ustvari sejo
+        bottle.response.set_cookie(
+            SESSION_COOKIE, uporabnik.email, path='/', secret=skrivnost)
+
+        bottle.redirect('/')
+    except ValueError as error:
+        bottle.redirect(f"/prijava?redirect={redirect}&error={error}")
     else:
-        uporabnik = uporabniki[email]
-        # TODO: povej, da je napačno geslo.
-        uporabnik.preveri_geslo(zasifrirano_geslo)
-
-    # Ustvari sejo
-    bottle.response.set_cookie(
-        SESSION_COOKIE, uporabnik.email, path='/', secret=skrivnost)
-
-    bottle.redirect('/')
+        bottle.redirect(
+            f'/vpis?redirect={redirect}&error=Nekaj je šlo narobe.')
 
 
 @bottle.get('/odjava')
@@ -301,15 +343,32 @@ def odjava():
 # Zaženi ---------------------------------------------------------------------
 
 if __name__ == '__main__':
+    # Izpiše podatke
+    print("# --------------------------------------")
+    print(f"Datoteke uvozim iz: {import_dir}")
+    print(f"Mapa aplikacije: {data_dir}")
+    print(f"Verzija: ${trenutna_verzija_aplikacije}")
+    print("# --------------------------------------")
+
     # Ustvari mapo s podatki aplikacije, če ta še ne obstaja.
     if not os.path.exists(data_dir):
         os.makedirs(data_dir)
 
     # Naloži uporabnike v aplikacijo.
     for ime_datoteke in os.listdir(data_dir):
-        uporabnik = Uporabnik.uvozi_iz_datoteke(
-            os.path.join(data_dir, ime_datoteke))
+        datoteka = os.path.join(data_dir, ime_datoteke)
+        uporabnik = Uporabnik.uvozi_iz_datoteke(datoteka)
         uporabniki[uporabnik.email] = uporabnik
+
+    # Importaj podatke
+    if os.path.exists(import_dir):
+        for ime_datoteke in os.listdir(import_dir):
+            # Naloži podatke
+            datoteka = os.path.join(import_dir, ime_datoteke)
+            uporabnik = Uporabnik.uvozi_iz_datoteke(datoteka)
+            uporabniki[uporabnik.email] = uporabnik
+            # Shrani v aplikacijo
+            uporabnik.shrani()
 
     # Zaženi spletni vmesnik.
     bottle.run(debug=True, reloader=True)

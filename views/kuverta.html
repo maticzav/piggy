@@ -206,10 +206,10 @@
                   class="px-6 py-4 whitespace-no-wrap text-sm leading-5 text-gray-500"
                 >
                   <!-- prettier-ignore -->
-                  % if transakcija.kind == "Prihodek":
+                  % if transakcija.kind == "prihodek":
                   % include("components/_small_badge.html", label="Prihodek", color="green")
                   <!-- prettier-ignore -->
-                  % elif transakcija.kind == "Odhodek":
+                  % elif transakcija.kind == "odhodek":
                   % include("components/_small_badge.html", label="Odhodek", color="yellow")
                   % end
                 </td>

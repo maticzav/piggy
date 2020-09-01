@@ -81,16 +81,18 @@
       % include("components/_add.html", href=f"/racun/{racun.ime}/ustvari_kuverto", label="Ustvari kuverto")
     </div>
 
+    <!-- Brez kuvert -->
+    % if not kuverte:
+    <div class="mt-5 mb-10 w-full sm:w-2/3">
+      <!-- prettier-ignore -->
+      % include("components/_empty.html", message="Izgleda, da v tem računu še ni kuvert.")
+    </div>
+    % end
+
     <!-- Kuverte grid -->
     <ul
       class="mx-3 mt-5 grid grid-cols-2 gap-5 sm:gap-6 sm:grid-cols-3 lg:grid-cols-4"
     >
-      <!-- Brez kuvert -->
-      % if len(kuverte) == 0:
-      <!-- prettier-ignore -->
-      % include("components/_empty.html", message="Izgleda, da v tem računu še ni kuvert.")
-      % end
-
       <!-- Kuverta -->
       % for kuverta in kuverte:
       <li
@@ -182,14 +184,25 @@
   <!-- Transakcije -->
 
   <div class="my-10">
-    <div class="flex items-center justify-between flex-no-wrap px-8 lg:px-10">
+    <div
+      class="flex items-center justify-between flex-no-wrap px-4 md:px-8 lg:px-10"
+    >
       % include("components/_small_heading.html", heading="Transakcije")
       <!-- prettier-ignore -->
       % include("components/_add.html", href=f"/racun/{racun.ime}/ustvari_transakcijo", label="Dodaj transakcijo")
     </div>
 
+    <!-- Brez transakcij -->
+    % if not transakcije:
+    <div class="mt-5 mb-10 w-full sm:w-2/3">
+      <!-- prettier-ignore -->
+      % include("components/_empty.html", message="Izgleda, da v tem računu še ni transakcij.")
+    </div>
+    % end
+
     <!-- Seznam transakcij. -->
 
+    % if transakcije:
     <div class="mt-10 flex flex-col">
       <div class="-my-2 py-2 overflow-x-auto sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
         <div
@@ -297,6 +310,7 @@
         </div>
       </div>
     </div>
+    % end
 
     <!--  -->
   </div>

@@ -41,7 +41,7 @@
         id="prihodek-button"
         onclick="select('prihodek-form')"
         type="button"
-        class="relative inline-flex items-center px-4 py-2 rounded-l-md border border-gray-300 bg-white text-sm leading-5 font-medium text-gray-700 hover:text-gray-500 focus:z-10 focus:outline-none focus:border-blue-300 focus:shadow-outline-blue bg-gray-100 text-gray-700 transition ease-in-out duration-150"
+        class="relative inline-flex items-center px-4 py-2 rounded-l-md border border-gray-300 bg-white text-sm leading-5 font-medium text-gray-700 hover:text-gray-500 focus:z-10 focus:outline-none focus:border-blue-300 focus:shadow-outline-blue transition ease-in-out duration-150"
       >
         Prihodek
       </button>
@@ -204,6 +204,15 @@
               </div>
               % end
             </div>
+
+            <!-- Napaka pri prejšnjem vpisu -->
+            % if error:
+            <div class="col-span-6">
+              <div class="text-sm font-medium leading-5 text-pink-500">
+                {{error}}
+              </div>
+            </div>
+            % end
           </div>
         </div>
 

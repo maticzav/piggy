@@ -9,13 +9,30 @@
 
   <!-- Header -->
 
-  <div class="flex justify-center md:justify-end px-8 lg:px-10">
+  <div class="flex my-5 justify-center md:justify-end px-8 lg:px-10">
     <!-- prettier-ignore -->
     % include("components/_add.html", href=f"/ustvari_racun", label="Ustvari račun")
   </div>
 
+  <!-- Wellcome message -->
+
+  % if not racuni:
+  <div class="my-3">
+    <div
+      class="bg-blue-100 border border-blue-200 text-blue-700 px-4 py-3 rounded"
+    >
+      Dobrodošli v Piggy-u. <br />
+      <br />
+      Izgleda, da nimate nastavljenega še nobenega računa. Za ustvarjanje računa
+      pritisnite tale gumb nad mano - Ustvari račun. 🐷
+    </div>
+  </div>
+
+  % end
+
   <!-- List -->
 
+  % if racuni:
   <div class="flex flex-col">
     <div class="py-5 overflow-x-auto px-6 lg:px-8">
       <div
@@ -94,4 +111,5 @@
       </div>
     </div>
   </div>
+  % end
 </div>
