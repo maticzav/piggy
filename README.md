@@ -2,6 +2,10 @@
 
 Budget planner za miljonarje.
 
+🏡 **Skupen davek:** Del zaslužka zmeraj ostane meni za izboljšanje kakovosti življenja.
+📨 **Kuvertni sistem evidence:** Kar lahko porabim namensko razdelim v kuverte.
+😍 **Hiter pregled:** Domač pogled mi omogča hiter pregled nad količino denarja, ki ga imam.
+
 ## Zagon
 
 Za zagon Piggy-ja je potrebno s spleta namestiti vse pomožne knjižnice. To lahko naredite z ukazom
