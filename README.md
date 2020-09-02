@@ -20,6 +20,8 @@ python main.py
 
 Piggy podpira tako uporabo na računalniku kot na mobilnih napravah.
 
+> Za testiranje lahko uporabiš email: "test@mail.com" in geslo "test". Piggy bo poizkušal te dadoteke prenesti iz mape import, ki naj bo znotraj poti kjer zaženemo bottle.
+
 ### Vpis
 
 Za vpis v račun vpišeš email in geslo. Če se kombinacija ujema z obstoječim uporabnikom v sistemu se bo zgodila prijava.
@@ -58,9 +60,11 @@ Recimo še, da nam babica stisne v žep 50€, ker se nas kar ne mora nagledat. 
 
 Ker se je ravno začelo šolsko leto bomo organizirali veliko zabavo na vrtu. Gremo v trgovino in zapravimo 50€. Ustvarili bomo odhodek iz kuverte zabava.
 
-### Urejanje transakcij
+### Urejanje in pregled transakcij
 
-Za urejanje transakcije kliknemo na posamezno transakcijo. Mesečne transakcije lahko tam zaključimo, lahko pa tudi spremenimo razdelitev po kuvertah.
+Transakcije lahko v tabeli na strani račun uredimo tako, da kliknemo na ime stolpca po katerem želimo transakcije razvrstiti.
+
+Za urejanje transakcije kliknemo na opis posamezne transakcijo. Mesečne transakcije lahko tam zaključimo, lahko pa tudi spremenimo razdelitev po kuvertah in opise transakcij. Zneskov ne moramo spreminjati, saj bi lahko tako investirali več kot imamo na voljo.
 
 ### Odjava in shranjevanje
 

@@ -72,7 +72,7 @@
 
     <div class="mt-10 flex flex-col">
       <div class="-my-2 py-2 overflow-x-auto sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
-        % if len(kuverta.prihodki) == 0:
+        % if len(prihodki) == 0:
         <!-- prettier-ignore -->
         % include("components/_empty.html", message="Ta kuverta še nima prihodkov.")
         % else:
@@ -103,7 +103,7 @@
             <tbody>
               <!-- Posamezna transakcija -->
 
-              % for prihodek in kuverta.prihodki:
+              % for prihodek in prihodki:
               <tr class="bg-white">
                 <td
                   class="px-6 py-4 whitespace-no-wrap text-sm leading-5 font-medium text-gray-900"

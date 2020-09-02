@@ -131,7 +131,7 @@ class Prihodek(Transakcija):
             racun=racun,
             datum=datum
         )
-        self.razpored_po_kuvertah = razpored_po_kuvertah
+        self.razpored_po_kuvertah: Dict['Kuverta', int] = razpored_po_kuvertah
 
     # Izračunane vrednosti ---------------------------------------------------
 
@@ -210,7 +210,7 @@ class MesecniPrihodek(Prihodek):
     def odprt_mescev(self) -> int:
         """Vrne koliko časa je ta prihodek že aktiven."""
         casovna_razlika: 'Period' = self.konec - self.zacetek
-        return casovna_razlika.months + 1
+        return casovna_razlika.years * 12 + casovna_razlika.months + 1
 
     @property
     def investicija(self) -> int:

@@ -191,7 +191,8 @@ def ustvari_kuverto(ime_racuna: str, ime_kuverte: str, gledalec: 'Uporabnik'):
     return {
         "racun": racun,
         "kuverta": kuverta,
-        "transakcije": kuverta.transakcije
+        "transakcije": kuverta.transakcije,
+        "prihodki": kuverta.prihodki
     }
 
 
@@ -260,7 +261,7 @@ def ustvari_kuverto(ime_racuna: str, gledalec: 'Uporabnik'):
 @auth
 def ustvari_transakcijo(ime_racuna: str, vrsta_transakcije: 'VrstaTransakcije', gledalec: 'Uporabnik'):
     opis = bottle.request.forms.getunicode("opis")
-    znesek = int(bottle.request.forms.getunicode("znesek")) * 100
+    znesek = float(bottle.request.forms.getunicode("znesek")) * 100
 
     # Try parsing the date.
     try:
@@ -275,6 +276,12 @@ def ustvari_transakcijo(ime_racuna: str, vrsta_transakcije: 'VrstaTransakcije', 
         return bottle.HTTPError(404)
 
     if vrsta_transakcije == "investicija":
+        # Preveri, da imamo dovolj denarja za investirati.
+        if znesek > racun.razpolozljivo_za_investicije:
+            bottle.redirect(
+                f"/racun/{ime_racuna}/ustvari_transakcijo?error=Premalo našparanega denarja.")
+            return
+
         racun.ustvari_investicijo(opis, znesek, datum)
     elif vrsta_transakcije == "prihodek":
         mesecni_prihodek = bool(

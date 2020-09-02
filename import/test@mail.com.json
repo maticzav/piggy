@@ -1,0 +1,136 @@
+{
+  "email": "test@mail.com",
+  "geslo": "a71079d42853dea26e453004338670a53814b78137ffbed07603a41d76a483aa9bc33b582f77d30a65e6f29a896c0411f38312e1d66e0bf16386c86a89bea572",
+  "racuni": [
+    {
+      "ime": "Glavni račun",
+      "racun": {
+        "ime": "Glavni račun",
+        "davek": 0.2,
+        "kuverte": [
+          {
+            "kind": "Kuverta",
+            "hash": 8655814132164949290,
+            "ime": "Hrana",
+            "barva": "zelena",
+            "ikona": "banka",
+            "znesek": null
+          },
+          {
+            "kind": "Kuverta",
+            "hash": 1985020617589094276,
+            "ime": "Zabava",
+            "barva": "rumena",
+            "ikona": "morje",
+            "znesek": null
+          },
+          {
+            "kind": "Kuverta",
+            "hash": -5049995645600444869,
+            "ime": "Prevoz",
+            "barva": "rdeča",
+            "ikona": "avto",
+            "znesek": null
+          }
+        ],
+        "transakcije": [
+          {
+            "id": 1,
+            "kind": "prihodek",
+            "opis": "Žepnina",
+            "znesek": 2000,
+            "datum": "2019-09-01T00:00:00Z",
+            "kuverta": null,
+            "je_investicija": null,
+            "je_mesecni_prihodek": true,
+            "razpored_po_kuvertah": [
+              {
+                "hash": 8655814132164949290,
+                "znesek": 500.0
+              },
+              {
+                "hash": 1985020617589094276,
+                "znesek": 500.0
+              }
+            ],
+            "konec": null
+          },
+          {
+            "id": 2,
+            "kind": "prihodek",
+            "opis": "Študentsko delo",
+            "znesek": 50000,
+            "datum": "2020-07-05T00:00:00Z",
+            "kuverta": null,
+            "je_investicija": null,
+            "je_mesecni_prihodek": true,
+            "razpored_po_kuvertah": [
+              {
+                "hash": 8655814132164949290,
+                "znesek": 15000.0
+              },
+              {
+                "hash": 1985020617589094276,
+                "znesek": 10000.0
+              },
+              {
+                "hash": -5049995645600444869,
+                "znesek": 5000.0
+              }
+            ],
+            "konec": null
+          },
+          {
+            "id": 3,
+            "kind": "odhodek",
+            "opis": "Cirkus Rojstni dan",
+            "znesek": 15000,
+            "datum": "2020-03-17T00:00:00Z",
+            "kuverta": 1985020617589094276,
+            "je_investicija": false,
+            "je_mesecni_prihodek": false,
+            "razpored_po_kuvertah": {},
+            "konec": null
+          },
+          {
+            "id": 4,
+            "kind": "odhodek",
+            "opis": "ZAUM delnica",
+            "znesek": 25000,
+            "datum": "2020-05-25T00:00:00Z",
+            "kuverta": null,
+            "je_investicija": true,
+            "je_mesecni_prihodek": false,
+            "razpored_po_kuvertah": {},
+            "konec": null
+          },
+          {
+            "id": 5,
+            "kind": "odhodek",
+            "opis": "Kraljeva pojedina",
+            "znesek": 15000,
+            "datum": "2020-06-09T00:00:00Z",
+            "kuverta": 8655814132164949290,
+            "je_investicija": false,
+            "je_mesecni_prihodek": false,
+            "razpored_po_kuvertah": {},
+            "konec": null
+          },
+          {
+            "id": 6,
+            "kind": "odhodek",
+            "opis": "Sirova štručka",
+            "znesek": 200,
+            "datum": "2020-09-02T15:09:46.409046+02:00",
+            "kuverta": 8655814132164949290,
+            "je_investicija": false,
+            "je_mesecni_prihodek": false,
+            "razpored_po_kuvertah": {},
+            "konec": null
+          }
+        ],
+        "arhiviran": false
+      }
+    }
+  ]
+}

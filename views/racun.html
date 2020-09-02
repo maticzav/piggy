@@ -62,7 +62,7 @@
             </dt>
             <dd class="mt-1 text-3xl leading-9 font-light text-gray-800">
               <!-- prettier-ignore -->
-              % include("components/_value.html", value=racun.namenjeno_za_kuverte/100)
+              % include("components/_value.html", value=racun.razpolozljivo_od_kuvert/100)
             </dd>
           </dl>
         </div>
@@ -324,8 +324,19 @@
                   %>
 
                   <!-- prettier-ignore -->
-                  % if transakcija.kind == "odhodek" and transakcija.kuverta is not None:
+                  % if transakcija.je_odhodek and transakcija.kuverta is not None:
                   % include("components/_badge.html", label=transakcija.kuverta.ime, color=tw_badge_color(transakcija.kuverta.barva))
+                  % end
+
+                  <!-- prettier-ignore -->
+                  % if transakcija.je_prihodek:
+                  % for kuverta in transakcija.razpored_po_kuvertah.keys():
+                  <a href="/racun/{{racun.ime}}/kuverta/{{kuverta.ime}}">
+                    <!-- prettier-ignore -->
+                    % include("components/_badge.html", label=kuverta.ime, color=tw_badge_color(kuverta.barva))
+                  </a>
+                  <!-- prettier-ignore -->
+                  % end 
                   % end
                 </td>
               </tr>

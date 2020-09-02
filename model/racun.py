@@ -42,7 +42,8 @@ class Racun:
                         opis=transakcija.opis,
                         znesek=transakcija.znesek,
                         racun=self,
-                        datum=transakcija.datum.add(months=mesec)
+                        datum=transakcija.datum.add(months=mesec),
+                        razpored_po_kuvertah=transakcija.razpored_po_kuvertah,
                     ))
             else:
                 transakcije.append(transakcija)
@@ -54,59 +55,68 @@ class Racun:
     @property
     def prihodki(self) -> List['Prihodek']:
         """Vrne vse prihodke med transakcijami."""
-        return [trans for trans in self.transakcije if trans.je_prihodek]
+        return [trans for trans in self._transakcije.values() if trans.je_prihodek]
 
     @property
     def odhodki(self) -> List['Odhodek']:
         """Vrne vse odhodke med transakcijami."""
-        return [trans for trans in self.transakcije if trans.je_odhodek]
+        return [trans for trans in self._transakcije.values() if trans.je_odhodek]
 
     @property
-    def porabljeno_od_investicij(self) -> int:
+    def porabljeno_od_investicij(self) -> float:
         """Vsota, ki smo jo namenili za investicije."""
-        vsota: int = 0
+        vsota: float = 0
         for transakcija in self.transakcije:
             if transakcija.je_odhodek and transakcija.je_investicija:
                 vsota -= transakcija.znesek
         return vsota
 
     @property
-    def namenjeno_za_investiranje(self) -> int:
+    def namenjeno_za_investiranje(self) -> float:
         """Ves denar, ki smo ga našparali z davkom."""
-        vsota: int = 0
+        vsota: float = 0
         for transakcija in self.transakcije:
             if transakcija.je_prihodek:
                 vsota += transakcija.investicija
         return vsota
 
     @property
-    def razpolozljivo_za_investicije(self) -> int:
+    def razpolozljivo_za_investicije(self) -> float:
         """Denar, ki ga še lahko investiramo."""
         return self.namenjeno_za_investiranje - self.porabljeno_od_investicij
 
     @property
-    def nerazporejeno_namenjeno(self) -> int:
+    def nerazporejeno_namenjeno(self) -> float:
         """Denar, ki ni šel v investicije in ga nismo dali v kuverte."""
-        return sum([prihodek.nerazporejeno for prihodek in self.prihodki])
+        return sum([tran.nerazporejeno for tran in self.transakcije if tran.je_prihodek])
 
     @property
-    def nerazporejeno_porabljeno(self) -> int:
+    def nerazporejeno_porabljeno(self) -> float:
         """Nerazporejen denar, ki smo ga že porabili."""
-        vsota: int = 0
+        vsota: float = 0
         for transakcija in self.transakcije:
             if transakcija.je_odhodek and transakcija.je_nerazporejen:
                 vsota -= transakcija.znesek
         return vsota
 
     @property
-    def nerazporejeno_razpolozljivo(self) -> int:
+    def nerazporejeno_razpolozljivo(self) -> float:
         """Nerazporejen denar, ki smo ga že porabili."""
         return self.nerazporejeno_namenjeno - self.nerazporejeno_porabljeno
 
     @property
-    def namenjeno_za_kuverte(self) -> int:
+    def namenjeno_za_kuverte(self) -> float:
         """Pove koliko denarja je bilo razporejenega v kuverte."""
         return sum([kuverta.namenjeno for kuverta in self.kuverte])
+
+    @property
+    def porabljeno_od_kuvert(self) -> float:
+        """Pove koliko denarja, ki smo ga dali v kuverte smo že porabili."""
+        return sum([kuverta.porabljeno for kuverta in self.kuverte])
+
+    @property
+    def razpolozljivo_od_kuvert(self) -> float:
+        return self.namenjeno_za_kuverte - self.porabljeno_od_kuvert
 
     @property
     def kuverte(self) -> List['Kuverta']:
@@ -136,17 +146,21 @@ class Racun:
         """Vrne stanje transakcij v slovarni obliki."""
         transakcije = []
 
-        for id_transakcije in self._transakcije:
-            transakcija = self._transakcije[id_transakcije]
+        for id, transakcija in self._transakcije.items():
+            # Razpored po kuvertah
             razpored_po_kuvertah = [{
                 'hash': hash(kuverta),
                 'znesek': znesek
             } for (kuverta, znesek) in transakcija.razpored_po_kuvertah.items()] if isinstance(transakcija, Prihodek) else dict()
+            # Kuverta
             kuverta = hash(transakcija.kuverta) if isinstance(
                 transakcija, Odhodek) and transakcija.kuverta is not None else None
+            # Konec
+            konec = transakcija._konec.to_iso8601_string(
+            ) if transakcija.je_prihodek and transakcija.je_mesecni and transakcija._konec else None
 
             transakcije.append({
-                'id': id_transakcije,
+                'id': id,
                 # Kuverte so lahko ali navadne kuverte ali mesečni odhodki.
                 'kind': transakcija.kind,
                 'opis': transakcija.opis,
@@ -159,7 +173,7 @@ class Racun:
                 'je_mesecni_prihodek': transakcija.je_prihodek and transakcija.je_mesecni,
                 'razpored_po_kuvertah': razpored_po_kuvertah,
                 # Predstavitev ponavljajočega prihodka.
-                'konec': transakcija._konec.to_iso8601_string() if transakcija._konec else None
+                'konec': konec
             })
 
         return transakcije
@@ -220,7 +234,7 @@ class Racun:
             razpored_po_kuvertah=razpored_po_kuvertah
         )
 
-        self._transakcije = trans
+        self._transakcije[id] = trans
 
         return trans
 

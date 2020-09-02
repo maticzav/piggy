@@ -53,8 +53,9 @@ class Uporabnik:
 
     def izvozi_v_datoteko(self, ime_datoteke: str):
         """Shrani stanje v datateko."""
+        stanje = self.stanje  # če se zgodi napaka ne zbriše datoteke
         with open(ime_datoteke, 'w') as datoteka:
-            json.dump(self.stanje, datoteka, ensure_ascii=False, indent=2)
+            json.dump(stanje, datoteka, ensure_ascii=False, indent=2)
 
     # Metode -----------------------------------------------------------------
 

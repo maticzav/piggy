@@ -37,7 +37,7 @@
             <label
               for="tax"
               class="block text-sm font-medium leading-5 text-gray-700"
-              >Davek (v odstotkih)</label
+              >Davek</label
             >
             <div class="mt-1 relative rounded-md shadow-sm">
               <input
@@ -46,7 +46,10 @@
                 type="number"
                 required
                 class="form-input block w-full pl-3 pr-12 sm:text-sm sm:leading-5"
-                placeholder="50"
+                step="1"
+                min="0"
+                max="100"
+                placeholder="50%"
                 aria-describedby="price-currency"
               />
               <div

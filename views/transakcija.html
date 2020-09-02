@@ -11,6 +11,12 @@
     <!--  -->
     <div class="-mt-10 text-gray-600 font-semibold">
       {{transakcija.datum.format('D.M.Y HH:mm')}}
+      <div class="mt-1">
+        % if transakcija.je_prihodek and transakcija.je_mesecni:
+        <!-- prettier-ignore -->
+        % include("components/_badge.html", label="Mesečni", color="yellow")
+      % end
+      </div>
     </div>
   </div>
 
@@ -156,6 +162,8 @@
               </span>
               <input
                 type="number"
+                step="0.01"
+                min="0"
                 name="kuverta_{{kuverta.ime}}"
                 class="form-input flex-1 block w-full px-3 py-2 rounded-none rounded-r-md sm:text-sm sm:leading-5"
                 placeholder="10€"
@@ -288,7 +296,7 @@
               <option value="{{None}}">Splošen odhodek</option>
               % for kuverta in racun.kuverte:
               <!-- transakcija.kuverta.ime == kuverta.ime and "selected" -->
-              <option value="{{kuverta.ime}}">
+              <option value="{{kuverta.ime}}" {{transakcija.kuverta.ime == kuverta.ime and "selected"}}>
                 {{kuverta.ime.capitalize()}}
               </option>
               % end
