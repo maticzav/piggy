@@ -2,16 +2,18 @@ import hashlib
 import os
 import random
 
-from typing import Dict
+from typing import Dict, List, TYPE_CHECKING
 
 import appdirs  # type:ignore
 import bottle  # type:ignore
 import pendulum
 
-from model.kuverta import Kuverta
-from model.racun import Racun
-from model.transakcija import VrstaTransakcije
 from model.uporabnik import Uporabnik
+from model.kuverta import BarvaKuverte, IkonaKuverte
+from model.transakcija import MesecniPrihodek, Odhodek, Prihodek
+
+if TYPE_CHECKING:
+    from model.transakcija import Transakcija, VrstaTransakcije
 
 # Config ---------------------------------------------------------------------
 
@@ -49,6 +51,11 @@ class Uporabnik(Uporabnik):
     def shrani(self) -> None:
         """Shrani stanje uporabnika."""
         self.izvozi_v_datoteko(os.path.join(data_dir, f"{self.email}.json"))
+
+    @classmethod
+    def uporabniske_datoteke_v(cls, path) -> List[str]:
+        """Vrne seznam datotek, ki vsebujejo podatke o uporabnikih znotraj dane poti."""
+        return [dat for dat in os.listdir(path) if dat.endswith(".json")]
 
 
 def auth(fn):
@@ -101,15 +108,52 @@ def ustvari_racun(gledalec: 'Uporabnik'):
 @bottle.view("racun.html")
 @auth
 def racun(ime: str, gledalec: 'Uporabnik'):
+    sorting = bottle.request.query.getunicode("sort", "date")
     racun = gledalec.racuni.get(ime)
 
     if racun is None:
         return bottle.HTTPError(404)
 
+    # Sortiraj
+    transakcije = racun.transakcije
+    if sorting == "description":
+        transakcije.sort(key=lambda t: t.opis)
+    elif sorting == "amount":
+        transakcije.sort(key=lambda t: -t.znesek)
+    elif sorting == "kind":
+        transakcije.sort(key=lambda t: t.znesek)
+    elif sorting == "envelope":
+        transakcije.sort(key=lambda t: t.kuverta.ime)
+    else:
+        transakcije.sort(key=lambda t: t.datum, reverse=True)
+
     return {
         "racun": racun,
         "kuverte": racun.kuverte,
-        "transakcije": racun.transakcije
+        "transakcije": transakcije,
+        "sorting": sorting
+    }
+
+
+@bottle.get("/racun/<ime>/transakcija/<id:int>")
+@bottle.view("transakcija.html")
+@auth
+def racun(ime: str, id: int, gledalec: 'Uporabnik'):
+    racun = gledalec.racuni.get(ime)
+
+    if racun is None:
+        return bottle.HTTPError(404)
+
+    transakcija = racun._transakcije[id]
+
+    if transakcija is None:
+        return bottle.HTTPError(404)
+
+    return {
+        "racun": racun,
+        "kuverte": racun.kuverte,
+        "transakcija": transakcija,
+        "today": pendulum.now()
     }
 
 
@@ -125,8 +169,8 @@ def ustvari_kuverto(ime: str, gledalec: 'Uporabnik'):
     return {
         "racun": racun,
         "kuverte": racun.kuverte,
-        "barve": Kuverta.razpolozljive_barve,
-        "ikone": Kuverta.razpolozljive_ikone
+        "barve": BarvaKuverte.values(),
+        "ikone": IkonaKuverte.values()
     }
 
 
@@ -220,7 +264,8 @@ def ustvari_transakcijo(ime_racuna: str, vrsta_transakcije: 'VrstaTransakcije', 
 
     # Try parsing the date.
     try:
-        datum = pendulum.parse(bottle.request.forms.getunicode("datum"))
+        datum = pendulum.from_format(
+            bottle.request.forms.getunicode("datum"), "DD-MM-YYYY")
     except:
         datum = pendulum.now()
 
@@ -237,7 +282,6 @@ def ustvari_transakcijo(ime_racuna: str, vrsta_transakcije: 'VrstaTransakcije', 
         # Najdi kuverte
         razpored_po_kuvertah = {}
         for kljuc in bottle.request.forms.keys():
-            print(kljuc)
             if kljuc.startswith("kuverta_"):
                 ime_kuverte = kljuc.replace("kuverta_", "")
                 kuverta = racun.kuverta.get(ime_kuverte)
@@ -247,7 +291,7 @@ def ustvari_transakcijo(ime_racuna: str, vrsta_transakcije: 'VrstaTransakcije', 
 
                 namenjeno = bottle.request.forms.getunicode(kljuc)
                 if namenjeno != "":
-                    razpored_po_kuvertah[kuverta] = int(namenjeno) * 100
+                    razpored_po_kuvertah[kuverta] = float(namenjeno) * 100
 
         # Preveri računico
         davek: float = racun.davek * znesek
@@ -286,6 +330,82 @@ def ustvari_transakcijo(ime_racuna: str, vrsta_transakcije: 'VrstaTransakcije', 
     gledalec.shrani()
 
     bottle.redirect(f"/racun/{racun.ime}")
+
+
+@bottle.post("/api/racun/<ime_racuna>/transakcija/<id:int>")
+@auth
+def uredi_transakcijo(ime_racuna: str, id: int, gledalec: 'Uporabnik'):
+    racun = gledalec.racuni.get(ime_racuna)
+
+    if racun is None:
+        return bottle.HTTPError(404)
+
+    transakcija = racun._transakcije[id]
+
+    if transakcija is None:
+        return bottle.HTTPError(404)
+
+    # Uredi transakcijo
+    # Opis
+    opis = bottle.request.forms.getunicode("opis")
+    # Datum
+    try:
+        datum = pendulum.from_format(
+            bottle.request.forms.getunicode("datum"), "DD-MM-YYYY")
+    except:
+        datum = transakcija.datum
+
+    transakcija.opis = opis
+    transakcija.datum = datum
+
+    # Odhodek
+    if transakcija.je_odhodek:
+        # Kuverta
+        ime_kuverte = bottle.request.forms.getunicode("kuverta")
+        if ime_kuverte == "None":
+            kuverta = None
+        else:
+            kuverta = racun.kuverta.get(ime_kuverte, None)
+        transakcija.kuverta = kuverta
+
+    # Prihodek
+    if transakcija.je_prihodek:
+        # Razpored po kuvertah
+        razpored_po_kuvertah = {}
+        for kljuc in bottle.request.forms.keys():
+            if kljuc.startswith("kuverta_"):
+                ime_kuverte = kljuc.replace("kuverta_", "")
+                kuverta = racun.kuverta.get(ime_kuverte)
+
+                if kuverta is None:
+                    return bottle.HTTPError(400)
+
+                namenjeno = bottle.request.forms.getunicode(kljuc)
+                if namenjeno != "":
+                    razpored_po_kuvertah[kuverta] = float(namenjeno) * 100
+        transakcija.razpored_po_kuvertah = razpored_po_kuvertah
+        # Konec
+        try:
+            konec = pendulum.from_format(
+                bottle.request.forms.getunicode("konec"), "DD-MM-YYYY")
+        except:
+            konec = None
+        transakcija._konec = konec
+
+    # Preveri računico
+    davek: float = racun.davek * transakcija.znesek
+    razporjeno_v_kuverte: int = sum(razpored_po_kuvertah.values())
+
+    if transakcija.znesek - davek - razporjeno_v_kuverte < 0:
+        bottle.redirect(
+            f"/racun/{ime_racuna}/ustvari_transakcijo?error=Napačen razpored.")
+        return
+
+    racun._transakcije[id]
+    gledalec.shrani()
+
+    bottle.redirect(f"/racun/{ime_racuna}")
+
 
 # Authorizacija
 
@@ -335,7 +455,9 @@ def prijava_post():
 
 
 @bottle.get('/odjava')
-def odjava():
+@auth
+def odjava(gledalec: 'Uporabnik'):
+    gledalec.shrani()
     bottle.response.delete_cookie(SESSION_COOKIE, path='/')
     bottle.redirect('/')
 
@@ -355,14 +477,14 @@ if __name__ == '__main__':
         os.makedirs(data_dir)
 
     # Naloži uporabnike v aplikacijo.
-    for ime_datoteke in os.listdir(data_dir):
+    for ime_datoteke in Uporabnik.uporabniske_datoteke_v(data_dir):
         datoteka = os.path.join(data_dir, ime_datoteke)
         uporabnik = Uporabnik.uvozi_iz_datoteke(datoteka)
         uporabniki[uporabnik.email] = uporabnik
 
     # Importaj podatke
     if os.path.exists(import_dir):
-        for ime_datoteke in os.listdir(import_dir):
+        for ime_datoteke in Uporabnik.uporabniske_datoteke_v(import_dir):
             # Naloži podatke
             datoteka = os.path.join(import_dir, ime_datoteke)
             uporabnik = Uporabnik.uvozi_iz_datoteke(datoteka)

@@ -98,7 +98,7 @@
 
             <div class="col-span-6 sm:col-span-2">
               <label
-                for="amount"
+                for="income_amount"
                 class="block text-sm font-medium leading-5 text-gray-700"
                 >Znesek</label
               >
@@ -121,7 +121,7 @@
                   </svg>
                 </div>
                 <input
-                  id="amount"
+                  id="income_amount"
                   type="number"
                   name="znesek"
                   required
@@ -161,7 +161,7 @@
                   id="date"
                   type="date"
                   name="datum"
-                  placeholder="2020-03-17"
+                  placeholder="17-3-2000"
                   class="form-input block w-full pl-10 sm:text-sm sm:leading-5"
                 />
               </div>
@@ -186,7 +186,8 @@
 
             <div class="col-span-6">
               <label class="text-sm font-medium leading-5 text-gray-700"
-                >Razpored po kuvertah</label
+                >Razpored po kuvertah
+                <span id="income_available">(0€)</span></label
               >
               % for kuverta in kuverte:
               <div class="my-2 flex rounded-md shadow-sm">
@@ -333,7 +334,7 @@
                   id="date"
                   type="date"
                   name="datum"
-                  placeholder="2020-03-17"
+                  placeholder="17-3-2000"
                   class="form-input block w-full pl-10 sm:text-sm sm:leading-5"
                 />
               </div>
@@ -499,7 +500,7 @@
                   id="date"
                   type="datetime"
                   name="datum"
-                  placeholder="2020-03-17"
+                  placeholder="17-3-2000"
                   class="form-input block w-full pl-10 sm:text-sm sm:leading-5"
                 />
               </div>
@@ -535,3 +536,24 @@
 
   <!--  -->
 </div>
+
+<!-- JavaScript -->
+
+<script>
+  // bottle inserts the number
+  var tax = {{racun.davek}};
+
+  var incomeAmountInputElement = document.querySelector("#income_amount");
+  var incomeAvailableElement = document.querySelector("#income_available");
+
+
+  function hint(event) {
+    var amount = parseFloat(event.target.value)
+    var deducted = amount * tax
+    var available = amount - deducted
+
+    incomeAvailableElement.innerHTML = `(${available}€, davek: ${deducted}€)`
+  }
+
+  incomeAmountInputElement.addEventListener("change", hint);
+</script>

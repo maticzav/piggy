@@ -10,7 +10,7 @@ if TYPE_CHECKING:
     from model.kuverta import Kuverta
 
 
-class VrstaTransakcije(enum.Enum):
+class VrstaTransakcije(str, enum.Enum):
     PRIHODEK = "prihodek"
     ODHODEK = "odhodek"
 
@@ -20,7 +20,15 @@ class Transakcija:
     Predstavlja prihodek ali odhodek.
     """
 
-    def __init__(self, opis: str, znesek: int, racun: 'Racun', datum: 'DateTime'):
+    def __init__(
+        self,
+        id: int,
+        opis: str,
+        znesek: int,
+        racun: 'Racun',
+        datum: 'DateTime'
+    ):
+        self.id: int = id
         self.opis: str = opis
         self.znesek: int = znesek
         self.datum: 'DateTime' = datum
@@ -31,17 +39,17 @@ class Transakcija:
     @property
     def je_prihodek(self) -> bool:
         """Pove ali je transakcija prihodek."""
-        return self.znesek >= 0
+        return self.kind == VrstaTransakcije.PRIHODEK
 
     @property
     def je_odhodek(self) -> bool:
         """Pove ali je transakcija odhodek."""
-        return self.znesek < 0
+        return self.kind == VrstaTransakcije.ODHODEK
 
     @property
     def kind(self) -> 'VrstaTransakcije':
         """Vrne vrsto transakcije."""
-        raise "Ni implementirano."
+        raise NotImplementedError("Transakcija nima vrste.")
 
     # """Vrne vrednost transakcije."""
     # @property
@@ -58,12 +66,22 @@ class Odhodek(Transakcija):
     predvidevamo da je splošen odhodek.
     """
 
-    def __init__(self, opis: str, znesek: int, racun: 'Racun', datum: 'DateTime', kuverta: Optional['Kuverta'] = None, je_investicija: bool = False):
+    def __init__(
+        self,
+        id: int,
+        opis: str,
+        znesek: int,
+        racun: 'Racun',
+        datum: 'DateTime',
+        kuverta: Optional['Kuverta'] = None,
+        je_investicija: bool = False
+    ):
         # Preverimo vrednosti
         assert kuverta is None or not je_investicija, "Odhodek gre ali iz kuverte ali investicij."
         assert znesek >= 0, "Količino je treba podati kot nenegativno vrednost."
 
         super().__init__(
+            id=id,
             opis=opis,
             znesek=-znesek,
             racun=racun,
@@ -76,7 +94,7 @@ class Odhodek(Transakcija):
 
     @property
     def kind(self) -> 'VrstaTransakcije':
-        raise VrstaTransakcije.ODHODEK
+        return VrstaTransakcije.ODHODEK
 
     @property
     def je_kuverten(self) -> bool:
@@ -94,11 +112,20 @@ class Prihodek(Transakcija):
     Predstavlja enkratni prihodek, ki ga razdelimo med kuverte.
     """
 
-    def __init__(self, opis: str, znesek: int, racun: 'Racun', datum: 'DateTime', razpored_po_kuvertah: Dict['Kuverta', int] = dict()):
+    def __init__(
+        self,
+        id: int,
+        opis: str,
+        znesek: int,
+        racun: 'Racun',
+        datum: 'DateTime',
+        razpored_po_kuvertah: Dict['Kuverta', int] = dict()
+    ):
         # Preverimo podatke
         assert znesek >= 0, "Prihodek mora bit pozitiven."
 
         super().__init__(
+            id=id,
             opis=opis,
             znesek=znesek,
             racun=racun,
@@ -110,7 +137,12 @@ class Prihodek(Transakcija):
 
     @property
     def kind(self) -> 'VrstaTransakcije':
-        raise VrstaTransakcije.PRIHODEK
+        return VrstaTransakcije.PRIHODEK
+
+    @property
+    def je_mesecni(self) -> bool:
+        """To ni mesečni prihodek."""
+        return False
 
     @property
     def investicija(self) -> int:
@@ -137,21 +169,32 @@ class MesecniPrihodek(Prihodek):
     Predstavlja prihodek, ki se ponavlja mesečno.
     """
 
-    def __init__(self, opis: str, znesek: int, racun: 'Racun', datum: 'DateTime', razpored_po_kuvertah: Dict['Kuverta', int] = dict()):
+    def __init__(
+        self,
+        id: int,
+        opis: str,
+        znesek: int,
+        racun: 'Racun',
+        datum: 'DateTime',
+        konec: Optional['DateTime'] = None,
+        razpored_po_kuvertah: Dict['Kuverta', int] = dict()
+    ):
         super().__init__(
+            id=id,
             opis=opis,
             znesek=znesek,
             racun=racun,
             razpored_po_kuvertah=razpored_po_kuvertah,
             datum=datum
         )
-        self._konec: Optional['DateTime'] = None
+        self._konec: Optional['DateTime'] = konec
 
     # Izračunane vrednosti ---------------------------------------------------
 
     @property
-    def kind(self) -> 'VrstaTransakcije':
-        raise VrstaTransakcije.PRIHODEK
+    def je_mesecni(self) -> bool:
+        """To je mesečni prihodek."""
+        return True
 
     @property
     def zacetek(self) -> 'DateTime':

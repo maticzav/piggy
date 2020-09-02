@@ -1,0 +1,320 @@
+% rebase("_page.html", title=transakcija.opis, racun=racun)
+
+<!-- Container -->
+<div class="container mx-auto px-4 sm:px-6 lg:px-8">
+  <!-- Name -->
+
+  <!-- Title -->
+  <div class="text-center">
+    % include("components/_heading.html", heading=transakcija.opis)
+
+    <!--  -->
+    <div class="-mt-10 text-gray-600 font-semibold">
+      {{transakcija.datum.format('D.M.Y HH:mm')}}
+    </div>
+  </div>
+
+  <!-- Overview -->
+
+  <div class="my-10 px-10">
+    <div class="mt-5 grid grid-cols-1 sm:grid-cols-3">
+      <!-- Znesek -->
+      <div class="bg-white overflow-hidden shadow rounded-lg sm:col-start-2">
+        <div class="px-4 py-5 sm:p-6">
+          <dl>
+            <dt class="text-sm leading-5 font-medium text-gray-500 truncate">
+              Znesek
+            </dt>
+            <dd class="mt-1 text-3xl leading-9 font-light text-gray-900">
+              <!-- prettier-ignore -->
+              % include("components/_value.html", value=transakcija.znesek/100)
+            </dd>
+          </dl>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Prihodek -->
+
+  % if transakcija.kind == "prihodek":
+  <form
+    action="/api/racun/{{racun.ime}}/transakcija/{{transakcija.id}}"
+    method="POST"
+  >
+    <div class="shadow overflow-hidden rounded-md mx-auto md:max-w-lg my-10">
+      <!--  -->
+      <div class="px-4 py-5 bg-white sm:p-6">
+        <div class="grid grid-cols-6 gap-6">
+          <!-- Opis -->
+          <div class="col-span-6 sm:col-span-4">
+            <label
+              for="description"
+              class="block text-sm font-medium leading-5 text-gray-700"
+              >Opis</label
+            >
+            <input
+              id="description"
+              name="opis"
+              value="{{transakcija.opis}}"
+              class="mt-1 form-input block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:shadow-outline-blue focus:border-blue-300 transition duration-150 ease-in-out sm:text-sm sm:leading-5"
+            />
+          </div>
+
+          <!-- Datum -->
+
+          <div class="col-span-3">
+            <label
+              for="date"
+              class="block text-sm font-medium leading-5 text-gray-700"
+              >Datum</label
+            >
+            <div class="mt-1 relative rounded-md shadow-sm">
+              <div
+                class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"
+              >
+                <svg
+                  class="h-5 w-5 text-gray-400"
+                  fill="none"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                  ></path>
+                </svg>
+              </div>
+              <input
+                id="date"
+                type="date"
+                name="datum"
+                required
+                value="{{transakcija.datum.format('DD-MM-YYYY')}}"
+                class="form-input block w-full pl-10 sm:text-sm sm:leading-5"
+              />
+            </div>
+          </div>
+
+          <!-- Konec -->
+
+          % if transakcija.je_mesecni:
+          <div class="col-span-3">
+            <label
+              for="date"
+              class="block text-sm font-medium leading-5 text-gray-700"
+            >
+              Konec
+            </label>
+            <div class="mt-1 relative rounded-md shadow-sm">
+              <div
+                class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"
+              >
+                <svg
+                  class="h-5 w-5 text-gray-400"
+                  fill="none"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                  ></path>
+                </svg>
+              </div>
+              <input
+                id="date"
+                type="date"
+                name="konec"
+                value="{{transakcija.konec.format('DD-MM-YYYY') if transakcija._konec else ''}}"
+                placeholder="{{today.format('DD-MM-YYYY')}}"
+                class="form-input block w-full pl-10 sm:text-sm sm:leading-5"
+              />
+            </div>
+          </div>
+          % end
+
+          <!-- Razpored po kuvertah -->
+
+          <div class="col-span-6">
+            <label class="text-sm font-medium leading-5 text-gray-700"
+              >Razpored po kuvertah
+              <span id="income_available">
+                ({{transakcija.znesek * (1 - racun.davek) / 100}}€)
+              </span>
+            </label>
+            % for kuverta in kuverte:
+            <div class="my-2 flex rounded-md shadow-sm">
+              <span
+                class="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500 sm:text-sm"
+              >
+                {{kuverta.ime.capitalize()}}
+              </span>
+              <input
+                type="number"
+                name="kuverta_{{kuverta.ime}}"
+                class="form-input flex-1 block w-full px-3 py-2 rounded-none rounded-r-md sm:text-sm sm:leading-5"
+                placeholder="10€"
+                value="{{transakcija.razpored_po_kuvertah.get(kuverta, 0) / 100 }}"
+              />
+            </div>
+            % end
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Save -->
+
+    <div class="px-4 py-3 text-center sm:px-6">
+      <a
+        class="inline-block py-2 mr-2 px-4 border border-transparent text-sm leading-5 font-medium rounded-md text-white bg-gray-400 shadow-sm hover:bg-gray-300 focus:outline-none active:bg-gray-500 transition duration-150 ease-in-out"
+        href="/racun/{{racun.ime}}"
+      >
+        Nazaj
+      </a>
+      <button
+        type="submit"
+        class="py-2 px-4 border border-transparent text-sm leading-5 font-medium rounded-md text-white bg-pink-400 shadow-sm hover:bg-pink-300 focus:outline-none focus:shadow-outline-blue active:bg-pink-500 transition duration-150 ease-in-out"
+      >
+        Shrani
+      </button>
+    </div>
+  </form>
+  % end
+
+  <!-- Odhodek -->
+
+  % if transakcija.kind == "odhodek":
+  <form
+    action="/api/racun/{{racun.ime}}/transakcija/{{transakcija.id}}"
+    method="POST"
+  >
+    <!--  -->
+    <div class="px-4 py-5 mx-auto md:max-w-lg sm:p-6">
+      <div class="grid grid-cols-6 gap-6">
+        <!-- Form items -->
+
+        <!--  -->
+        <div class="col-span-6 sm:col-span-4">
+          <label
+            for="description"
+            class="block text-sm font-medium leading-5 text-gray-700"
+            >Opis</label
+          >
+          <input
+            id="description"
+            name="opis"
+            required
+            value="{{transakcija.opis}}"
+            class="mt-1 form-input block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:shadow-outline-blue focus:border-blue-300 transition duration-150 ease-in-out sm:text-sm sm:leading-5"
+          />
+        </div>
+
+        <!-- Datum -->
+
+        <div class="col-span-3">
+          <label
+            for="date"
+            class="block text-sm font-medium leading-5 text-gray-700"
+            >Datum</label
+          >
+          <div class="mt-1 relative rounded-md shadow-sm">
+            <div
+              class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"
+            >
+              <svg
+                class="h-5 w-5 text-gray-400"
+                fill="none"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                ></path>
+              </svg>
+            </div>
+            <input
+              id="date"
+              type="date"
+              name="datum"
+              required
+              value="{{transakcija.datum.format('DD-MM-YYYY')}}"
+              class="form-input block w-full pl-10 sm:text-sm sm:leading-5"
+            />
+          </div>
+        </div>
+
+        <!--  -->
+
+        <div class="col-span-6 sm:col-span-3">
+          <label
+            for="envelope"
+            class="block text-sm font-medium leading-5 text-gray-700"
+            >Kuverta</label
+          >
+          <div class="mt-1 relative rounded-md shadow-sm">
+            <div
+              class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"
+            >
+              <svg
+                class="h-5 w-5 text-gray-400"
+                fill="none"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                ></path>
+              </svg>
+            </div>
+
+            <select
+              id="envelope"
+              name="kuverta"
+              required
+              class="mt-1 pl-10 block form-select w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:shadow-outline-blue focus:border-blue-300 transition duration-150 ease-in-out sm:text-sm sm:leading-5"
+            >
+              <option value="{{None}}">Splošen odhodek</option>
+              % for kuverta in racun.kuverte:
+              <!-- transakcija.kuverta.ime == kuverta.ime and "selected" -->
+              <option value="{{kuverta.ime}}">
+                {{kuverta.ime.capitalize()}}
+              </option>
+              % end
+            </select>
+          </div>
+        </div>
+      </div>
+      <!--  -->
+
+      <div class="mt-10 px-4 py-3 text-center sm:px-6">
+        <a
+          class="inline-block py-2 mr-2 px-4 border border-transparent text-sm leading-5 font-medium rounded-md text-white bg-gray-400 shadow-sm hover:bg-gray-300 focus:outline-none active:bg-gray-500 transition duration-150 ease-in-out"
+          href="/racun/{{racun.ime}}"
+        >
+          Nazaj
+        </a>
+        <button
+          type="submit"
+          class="py-2 px-4 border border-transparent text-sm leading-5 font-medium rounded-md text-white bg-pink-400 shadow-sm hover:bg-pink-300 focus:outline-none focus:shadow-outline-blue active:bg-pink-500 transition duration-150 ease-in-out"
+        >
+          Shrani
+        </button>
+      </div>
+
+      <!--  -->
+    </div>
+  </form>
+  % end
+</div>

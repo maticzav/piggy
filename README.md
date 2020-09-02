@@ -58,6 +58,14 @@ Recimo še, da nam babica stisne v žep 50€, ker se nas kar ne mora nagledat. 
 
 Ker se je ravno začelo šolsko leto bomo organizirali veliko zabavo na vrtu. Gremo v trgovino in zapravimo 50€. Ustvarili bomo odhodek iz kuverte zabava.
 
+### Urejanje transakcij
+
+Za urejanje transakcije kliknemo na posamezno transakcijo. Mesečne transakcije lahko tam zaključimo, lahko pa tudi spremenimo razdelitev po kuvertah.
+
+### Odjava in shranjevanje
+
+Piggy vsak korak nemudoma shrani v sistem. Ko smo z urejevanjem končali lahko tako preprosto kliknemo gumb odjava in se iz sistema odjavimo.
+
 ## Nastavitev razvijalskega orodja
 
 ### Kako nastaviti Python

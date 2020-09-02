@@ -1,13 +1,13 @@
 import json
-from typing import Dict, List, Literal, TypedDict, TYPE_CHECKING
+from typing import Dict, List, Literal, TypedDict, TYPE_CHECKING, Optional
 
 import pendulum
 
 if TYPE_CHECKING:
     from pendulum import DateTime
 
-from model.kuverta import Kuverta, MesecniOdhodek, BarvaKuverte, IkonaKuverte
-from model.transakcija import Transakcija, Odhodek, Prihodek, MesecniPrihodek
+from model.kuverta import BarvaKuverte, IkonaKuverte, Kuverta, MesecniOdhodek
+from model.transakcija import VrstaTransakcije, Transakcija, Odhodek, Prihodek, MesecniPrihodek
 
 
 class Racun:
@@ -22,21 +22,11 @@ class Racun:
 
         self.ime: str = ime
         self.davek: float = davek
-        self._transakcije: List['Transakcija'] = list()
+        self._transakcije: Dict[int, 'Transakcija'] = dict()
         self._kuverte: Dict[str, 'Kuverta'] = dict()
         self.arhiviran: bool = False
 
     # Izračunane vrednosti ---------------------------------------------------
-
-    @property
-    def prihodki(self) -> List['Prihodek']:
-        """Vrne vse prihodki med transakcijami."""
-        return [trans for trans in self._transakcije if trans.je_prihodek]
-
-    @property
-    def odhodki(self) -> List['Odhodek']:
-        """Vrne vse odhodke med transakcijami."""
-        return [trans for trans in self._transakcije if trans.je_odhodek]
 
     @property
     def transakcije(self) -> List['Transakcija']:
@@ -44,10 +34,11 @@ class Racun:
         danes = pendulum.now()
         transakcije: List['Transakcija'] = []
 
-        for transakcija in self._transakcije:
-            if transakcija.kind == "MesecniPrihodek":
+        for transakcija in self._transakcije.values():
+            if isinstance(transakcija, MesecniPrihodek):
                 for mesec in range(0, transakcija.odprt_mescev):
-                    transakcije.append(Transakcija(
+                    transakcije.append(Prihodek(
+                        id=transakcija.id,
                         opis=transakcija.opis,
                         znesek=transakcija.znesek,
                         racun=self,
@@ -61,10 +52,20 @@ class Racun:
         return transakcije
 
     @property
+    def prihodki(self) -> List['Prihodek']:
+        """Vrne vse prihodke med transakcijami."""
+        return [trans for trans in self.transakcije if trans.je_prihodek]
+
+    @property
+    def odhodki(self) -> List['Odhodek']:
+        """Vrne vse odhodke med transakcijami."""
+        return [trans for trans in self.transakcije if trans.je_odhodek]
+
+    @property
     def porabljeno_od_investicij(self) -> int:
         """Vsota, ki smo jo namenili za investicije."""
         vsota: int = 0
-        for transakcija in self._transakcije:
+        for transakcija in self.transakcije:
             if transakcija.je_odhodek and transakcija.je_investicija:
                 vsota -= transakcija.znesek
         return vsota
@@ -73,7 +74,7 @@ class Racun:
     def namenjeno_za_investiranje(self) -> int:
         """Ves denar, ki smo ga našparali z davkom."""
         vsota: int = 0
-        for transakcija in self._transakcije:
+        for transakcija in self.transakcije:
             if transakcija.je_prihodek:
                 vsota += transakcija.investicija
         return vsota
@@ -92,7 +93,7 @@ class Racun:
     def nerazporejeno_porabljeno(self) -> int:
         """Nerazporejen denar, ki smo ga že porabili."""
         vsota: int = 0
-        for transakcija in self._transakcije:
+        for transakcija in self.transakcije:
             if transakcija.je_odhodek and transakcija.je_nerazporejen:
                 vsota -= transakcija.znesek
         return vsota
@@ -133,23 +134,35 @@ class Racun:
     @property
     def stanje_transakcij(self):
         """Vrne stanje transakcij v slovarni obliki."""
-        return [{
-            # Kuverte so lahko ali navadne kuverte ali mesečni odhodki.
-            'kind': transakcija.kind,
-            'opis': transakcija.opis,
-            'znesek': abs(transakcija.znesek),
-            'datum': transakcija.datum.to_iso8601_string(),
-            # Predstavitev odhodka.
-            'kuverta': hash(transakcija.kuverta) if isinstance(transakcija, Odhodek) and transakcija.kuverta is not None else None,
-            'je_investicija': transakcija.je_investicija if isinstance(transakcija, Odhodek) else None,
-            # Predstavitev prihodka.
-            'razpored_po_kuvertah': [{
+        transakcije = []
+
+        for id_transakcije in self._transakcije:
+            transakcija = self._transakcije[id_transakcije]
+            razpored_po_kuvertah = [{
                 'hash': hash(kuverta),
                 'znesek': znesek
-            } for (kuverta, znesek) in transakcija.razpored_po_kuvertah.items()] if isinstance(transakcija, Prihodek) else None,
-            # Predstavitev ponavljajočega prihodka.
-            'konec': transakcija.konec.to_iso8601_string() if isinstance(transakcija, MesecniPrihodek) else None
-        } for transakcija in self._transakcije]
+            } for (kuverta, znesek) in transakcija.razpored_po_kuvertah.items()] if isinstance(transakcija, Prihodek) else dict()
+            kuverta = hash(transakcija.kuverta) if isinstance(
+                transakcija, Odhodek) and transakcija.kuverta is not None else None
+
+            transakcije.append({
+                'id': id_transakcije,
+                # Kuverte so lahko ali navadne kuverte ali mesečni odhodki.
+                'kind': transakcija.kind,
+                'opis': transakcija.opis,
+                'znesek': abs(transakcija.znesek),
+                'datum': transakcija.datum.to_iso8601_string(),
+                # Predstavitev odhodka.
+                'kuverta': kuverta,
+                'je_investicija': transakcija.je_investicija if isinstance(transakcija, Odhodek) else None,
+                # Predstavitev prihodka.
+                'je_mesecni_prihodek': transakcija.je_prihodek and transakcija.je_mesecni,
+                'razpored_po_kuvertah': razpored_po_kuvertah,
+                # Predstavitev ponavljajočega prihodka.
+                'konec': transakcija._konec.to_iso8601_string() if transakcija._konec else None
+            })
+
+        return transakcije
 
     @property
     def stanje_kuvert(self):
@@ -165,28 +178,50 @@ class Racun:
 
     # Namere -----------------------------------------------------------------
 
-    def ustvari_mesecni_prihodek(self, opis: str, znesek: int, datum: 'DateTime' = pendulum.now(), razpored_po_kuvertah: Dict['Kuverta', int] = {}) -> 'MesecniPrihodek':
+    def id_nove_transakcije(self):
+        """Vrne ID, ki ga naj uporabimo za naslednjo transakcijo."""
+        ids = list(self._transakcije.keys())
+        ids.append(0)
+        return max(ids) + 1
+
+    def ustvari_mesecni_prihodek(
+            self,
+            opis: str,
+            znesek: int,
+            datum: 'DateTime' = pendulum.now(),
+            razpored_po_kuvertah: Dict['Kuverta', int] = {},
+    ) -> 'MesecniPrihodek':
         """Začne nov ponavljajoči prihodek."""
+        id = self.id_nove_transakcije()
+
         trans = MesecniPrihodek(
+            id=id,
             opis=opis,
             znesek=znesek,
             racun=self,
             datum=datum,
             razpored_po_kuvertah=razpored_po_kuvertah
         )
-        self._transakcije.append(trans)
+
+        self._transakcije[id] = trans
+
         return trans
 
     def ustvari_prihodek(self, opis: str, znesek: int, datum: 'DateTime' = pendulum.now(), razpored_po_kuvertah: Dict['Kuverta', int] = {}) -> 'Prihodek':
         """Ustvari enkratni prihodek."""
+        id = self.id_nove_transakcije()
+
         trans = Prihodek(
+            id=id,
             opis=opis,
             znesek=znesek,
             racun=self,
             datum=datum,
             razpored_po_kuvertah=razpored_po_kuvertah
         )
-        self._transakcije.append(trans)
+
+        self._transakcije = trans
+
         return trans
 
     def ustvari_mesecni_odhodek(self, opis: str, znesek: int) -> 'MesecniOdhodek':
@@ -201,26 +236,36 @@ class Racun:
 
     def ustvari_odhodek(self, opis: str, znesek: int, datum: 'DateTime' = pendulum.now(), kuverta: 'Kuverta' = None) -> 'Odhodek':
         """Ustvari enkraten odhodek na računu ali v kuverti."""
+        id = self.id_nove_transakcije()
+
         trans = Odhodek(
+            id=id,
             opis=opis,
             znesek=znesek,
             datum=datum,
             racun=self,
             kuverta=kuverta
         )
-        self._transakcije.append(trans)
+
+        self._transakcije[id] = trans
+
         return trans
 
     def ustvari_investicijo(self, opis: str, znesek: int, datum: 'DateTime' = pendulum.now()) -> 'Odhodek':
         """Ustvari novo investicijo."""
+        id = self.id_nove_transakcije()
+
         trans = Odhodek(
+            id=id,
             opis=opis,
             znesek=znesek,
             racun=self,
             je_investicija=True,
             datum=datum
         )
-        self._transakcije.append(trans)
+
+        self._transakcije[id] = trans
+
         return trans
 
     def ustvari_kuverto(self, ime: str, barva: 'BarvaKuverte' = BarvaKuverte.MODRA, ikona: 'IkonaKuverte' = IkonaKuverte.KUVERTA) -> 'Kuverta':
@@ -275,50 +320,53 @@ class Racun:
 
         # Naloži transakcije
         for j_trans in json["transakcije"]:
+            id = j_trans["id"]
+
             # Odhodek
-            if j_trans["kind"] == "Odhodek":
-                if j_trans.get("kuverta"):
-                    racun.ustvari_odhodek(
-                        opis=j_trans["opis"],
-                        znesek=j_trans["znesek"],
-                        datum=pendulum.parse(j_trans["datum"]),
-                        kuverta=kuverte_po_hashih[j_trans["kuverta"]],
-                    )
-                elif j_trans.get("je_investicija", False):
-                    racun.ustvari_investicijo(
-                        opis=j_trans["opis"],
-                        znesek=j_trans["znesek"],
-                        datum=pendulum.parse(j_trans["datum"]),
-                    )
-                else:
-                    racun.ustvari_odhodek(
-                        opis=j_trans["opis"],
-                        znesek=j_trans["znesek"],
-                        datum=pendulum.parse(j_trans["datum"]),
-                    )
+            if j_trans["kind"] == VrstaTransakcije.ODHODEK:
+                kuverta = kuverte_po_hashih[j_trans["kuverta"]
+                                            ] if j_trans["kuverta"] else None
+                trans = Odhodek(
+                    id=id,
+                    opis=j_trans["opis"],
+                    znesek=j_trans["znesek"],
+                    datum=pendulum.parse(j_trans["datum"]),
+                    racun=racun,
+                    kuverta=kuverta,
+                    je_investicija=j_trans.get("je_investicija", False)
+                )
+
             # Prihodek
-            else:
+            if j_trans["kind"] == VrstaTransakcije.PRIHODEK:
                 # Sestavi razpored po kuvertah
-                razpored: Dict['Kuverta', int] = {}
+                razpored: Dict['Kuverta', int] = dict()
                 for rel in j_trans["razpored_po_kuvertah"]:
                     razpored[kuverte_po_hashih[rel["hash"]]] = rel["znesek"]
 
                 # Ustvari transakcije.
-                if j_trans["kind"] == "Prihodek":
-                    racun.ustvari_prihodek(
+                if j_trans["je_mesecni_prihodek"]:
+                    trans = MesecniPrihodek(
+                        id=id,
                         opis=j_trans["opis"],
                         znesek=j_trans["znesek"],
+                        racun=racun,
+                        datum=pendulum.parse(j_trans["datum"]),
+                        konec=pendulum.parse(
+                            j_trans["konec"]) if j_trans["konec"] else None,
+                        razpored_po_kuvertah=razpored
+                    )
+                else:
+                    trans = Prihodek(
+                        id=id,
+                        opis=j_trans["opis"],
+                        znesek=j_trans["znesek"],
+                        racun=racun,
                         datum=pendulum.parse(j_trans["datum"]),
                         razpored_po_kuvertah=razpored,
                     )
-                if j_trans["kind"] == "MesecniPrihodek":
-                    racun.ustvari_mesecni_prihodek(
-                        opis=j_trans["opis"],
-                        znesek=j_trans["znesek"],
-                        datum=pendulum.parse(j_trans["datum"]),
-                        razpored_po_kuvertah=razpored
-                    )
 
+            # Dodaj v zbir id-jev.
+            racun._transakcije[id] = trans
         return racun
 
     @classmethod

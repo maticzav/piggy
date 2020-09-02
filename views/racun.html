@@ -102,7 +102,7 @@
         <%
           # Tailwind color
           def tw_color(barva):
-            if barva == "rdeca":
+            if barva == "rdeča":
               return "text-white bg-red-400"
             elif barva == "modra":
               return "text-white bg-blue-400"
@@ -214,27 +214,52 @@
                 <th
                   class="pl-6 pr-2 py-3 border-b border-gray-200 bg-gray-50 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider"
                 >
-                  Datum
+                  <a
+                    href="?sort=date"
+                    class="{{'underline' if sorting == 'date' else ''}}"
+                  >
+                    Datum
+                  </a>
                 </th>
                 <th
                   class="px-6 py-3 border-b border-gray-200 bg-gray-50 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider"
                 >
-                  Opis
+                  <a
+                    href="?sort=description"
+                    class="{{'underline' if sorting == 'description' else ''}}"
+                  >
+                    Opis
+                  </a>
                 </th>
                 <th
                   class="px-6 py-3 border-b border-gray-200 bg-gray-50 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider"
                 >
-                  Znesek
+                  <a
+                    href="?sort=amount"
+                    class="{{'underline' if sorting == 'amount' else ''}}"
+                  >
+                    Znesek
+                  </a>
                 </th>
                 <th
                   class="px-6 py-3 border-b border-gray-200 bg-gray-50 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider"
                 >
-                  Vrsta
+                  <a
+                    href="?sort=kind"
+                    class="{{'underline' if sorting == 'kind' else ''}}"
+                  >
+                    Vrsta
+                  </a>
                 </th>
                 <th
                   class="px-6 py-3 border-b border-gray-200 bg-gray-50 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider"
                 >
-                  Kuverta
+                  <a
+                    href="?sort=envelope"
+                    class="{{'underline' if sorting == 'envelope' else ''}}"
+                  >
+                    Kuverta
+                  </a>
                 </th>
               </tr>
             </thead>
@@ -247,12 +272,14 @@
                 <td
                   class="pl-6 pr-2 py-4 whitespace-no-wrap text-sm leading-5 font-medium text-gray-500"
                 >
-                  {{transakcija.datum.format('D.M.Y H:m')}}
+                  {{transakcija.datum.format('D.M.Y')}}
                 </td>
                 <td
                   class="px-6 py-4 whitespace-no-wrap text-sm leading-5 font-medium text-gray-900"
                 >
-                  {{transakcija.opis}}
+                  <a href="/racun/{{racun.ime}}/transakcija/{{transakcija.id}}">
+                    {{transakcija.opis}}
+                  </a>
                 </td>
                 <td
                   class="px-6 py-4 whitespace-no-wrap text-sm leading-5 text-gray-500"
@@ -264,13 +291,13 @@
                   class="px-6 py-4 whitespace-no-wrap text-sm leading-5 text-gray-500"
                 >
                   <!-- prettier-ignore -->
-                  % if transakcija.kind == "Prihodek":
+                  % if transakcija.kind == "prihodek":
                   % include("components/_small_badge.html", label="Prihodek", color="green")
                   <!-- prettier-ignore -->
-                  % elif transakcija.kind == "Odhodek" and transakcija.je_investicija:
+                  % elif transakcija.kind == "odhodek" and transakcija.je_investicija:
                   % include("components/_small_badge.html", label="Investicija", color="blue")
                   <!-- prettier-ignore -->
-                  % elif transakcija.kind == "Odhodek" and not transakcija.je_investicija:
+                  % elif transakcija.kind == "odhodek" and not transakcija.je_investicija:
                   % include("components/_small_badge.html", label="Odhodek", color="yellow")
 
                   % end
@@ -282,7 +309,7 @@
                   <%
                   # Tailwind color
                   def tw_badge_color(barva):
-                    if barva == "rdeca":
+                    if barva == "rdeča":
                       return "red"
                     elif barva == "modra":
                       return "blue"
@@ -297,7 +324,7 @@
                   %>
 
                   <!-- prettier-ignore -->
-                  % if transakcija.kind == "Odhodek" and transakcija.kuverta is not None:
+                  % if transakcija.kind == "odhodek" and transakcija.kuverta is not None:
                   % include("components/_badge.html", label=transakcija.kuverta.ime, color=tw_badge_color(transakcija.kuverta.barva))
                   % end
                 </td>
