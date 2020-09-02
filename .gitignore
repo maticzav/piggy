@@ -1,6 +1,9 @@
 # Editor
 .vscode
 
+# Environment
+.DS_Store
+
 # TailwindCSS
 node_modules
 

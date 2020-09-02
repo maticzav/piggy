@@ -28,6 +28,10 @@ Za vpis v račun vpišeš email in geslo. Če se kombinacija ujema z obstoječim
 
 Za ustvarjanje računa vpišeš email in geslo. Če email še ni bil uporabljen, se bo ustvaril nov račun, drugače pa lahko vanj vstopiš z geslom, ki si ga nastavil. Če vpisano geslo ni pravilno ti bo to Piggy sporočil.
 
+<div align="center">
+   <img src="assets/prijava.png" width="400" />
+</div>
+
 ### Ustvarjanje računa
 
 Piggy omogoča vodenje večih računov hkrati. Ko se prvič vpišeš ali pa še nimaš računa, ti bo Piggy pomagal, da ga ustvariš.
@@ -43,6 +47,10 @@ Izdatke si je glede na namen najboljše razdelit v posamezne kuverte. Na primer,
 Vsaki kuverti damo ime, ki si ga bomo najlažje zapomnili. Za lepše pa si lahko izberemo še barvo kuverte in ikono.
 
 V domačem pogledu lahko vidimo koliko denarja je na voljo v posamezni kuverti. Denarja je lahko tudi manj kot nič - takrat se bo kuverta obravala rdeče - a strmimo k temu, da nikoli ne porabimo več kot smo v kuverto namenili.
+
+<div align="center">
+   <img src="assets/kuverta.png" width="400" />
+</div>
 
 ### Ustvrajanje transakcij
 
@@ -65,6 +73,10 @@ Ker se je ravno začelo šolsko leto bomo organizirali veliko zabavo na vrtu. Gr
 Transakcije lahko v tabeli na strani račun uredimo tako, da kliknemo na ime stolpca po katerem želimo transakcije razvrstiti.
 
 Za urejanje transakcije kliknemo na opis posamezne transakcijo. Mesečne transakcije lahko tam zaključimo, lahko pa tudi spremenimo razdelitev po kuvertah in opise transakcij. Zneskov ne moramo spreminjati, saj bi lahko tako investirali več kot imamo na voljo.
+
+<div align="center">
+   <img src="assets/domov.png" width="400" />
+</div>
 
 ### Odjava in shranjevanje
 
